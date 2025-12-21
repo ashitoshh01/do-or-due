@@ -79,6 +79,11 @@ export const addFunds = async (userId, amount) => {
     });
 };
 
+export const updateUserProfile = async (userId, updates) => {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, updates);
+};
+
 // --- Task Operations ---
 
 export const subscribeToTasks = (userId, callback) => {
@@ -100,6 +105,15 @@ export const subscribeToTasks = (userId, callback) => {
 };
 
 export const addTask = async (userId, taskData) => {
+    // Validate deadline is not in the past
+    if (taskData.deadline) {
+        const deadlineDate = new Date(taskData.deadline);
+        const now = new Date();
+        if (deadlineDate <= now) {
+            throw new Error("Deadline must be in the future");
+        }
+    }
+
     // 1. Create Task in Subcollection
     await addDoc(collection(db, "users", userId, "tasks"), {
         userId, // Keep userId for reference if needed, though implicit in path

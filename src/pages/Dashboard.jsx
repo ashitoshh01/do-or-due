@@ -92,8 +92,11 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
                                     <Calendar size={16} color="hsl(var(--color-text-secondary))" />
-                                    <input type="date" style={{ border: 'none', outline: 'none', width: '100%' }}
+                                    <input
+                                        type="date"
+                                        style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'hsl(var(--color-text-main))' }}
                                         value={newTask.deadline ? newTask.deadline.split('T')[0] : ''}
+                                        min={new Date().toISOString().split('T')[0]}
                                         onChange={e => {
                                             const date = e.target.value;
                                             const time = newTask.deadline ? newTask.deadline.split('T')[1] : '23:59';
@@ -103,7 +106,9 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                                 </div>
                                 <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '120px' }}>
                                     <Clock size={16} color="hsl(var(--color-text-secondary))" />
-                                    <input type="time" style={{ border: 'none', outline: 'none', width: '100%' }}
+                                    <input
+                                        type="time"
+                                        style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'hsl(var(--color-text-main))' }}
                                         value={newTask.deadline ? newTask.deadline.split('T')[1] : '23:59'}
                                         onChange={e => {
                                             const time = e.target.value;
@@ -135,12 +140,23 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                             className="btn btn-primary"
                             style={{ width: '100%', padding: '14px', borderRadius: '8px' }}
                             onClick={() => {
-                                if (newTask.title && newTask.stake) {
-                                    onCreate({ objective: newTask.title, deadline: newTask.deadline, stake: newTask.stake });
-                                    setNewTask({ title: '', desc: '', deadline: '', stake: '' }); // Reset
-                                } else {
+                                if (!newTask.title || !newTask.stake) {
                                     alert("Please fill in title and stake");
+                                    return;
                                 }
+
+                                // Validate deadline is not in the past
+                                if (newTask.deadline) {
+                                    const deadlineDate = new Date(newTask.deadline);
+                                    const now = new Date();
+                                    if (deadlineDate <= now) {
+                                        alert("⚠️ Deadline must be in the future. Please select a valid date and time.");
+                                        return;
+                                    }
+                                }
+
+                                onCreate({ objective: newTask.title, deadline: newTask.deadline, stake: newTask.stake });
+                                setNewTask({ title: '', desc: '', deadline: '', stake: '' }); // Reset
                             }}
                         >
                             Stake {newTask.stake || '0'} DueCoins

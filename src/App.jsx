@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Layout from './components/Layout';
@@ -9,6 +10,8 @@ import UploadModal from './components/UploadModal';
 import TaskResult from './pages/TaskResult';
 import Leaderboard from './pages/Leaderboard';
 import Planner from './pages/Planner';
+import Settings from './pages/Settings';
+import Analytics from './pages/Analytics';
 import AddFundsModal from './components/AddFundsModal';
 
 import { subscribeToTasks, subscribeToUser, addTask, deleteTask, updateTaskStatus, updateUserBalance, completeTask, addFunds, failTask } from './services/dbService';
@@ -137,6 +140,10 @@ function MainApp() {
         return <Leaderboard />;
       case 'planner':
         return <Planner stats={userProfile.stats} history={tasks} balance={userProfile.balance} />;
+      case 'settings':
+        return <Settings userProfile={userProfile} onProfileUpdate={(updates) => setUserProfile(prev => ({ ...prev, ...updates }))} />;
+      case 'analytics':
+        return <Analytics history={tasks} />;
       case 'result_success':
         return <TaskResult result="success" task={currentTask || { stake: 0 }} onHome={() => setAppView('dashboard')} />;
       case 'result_fail':
@@ -148,7 +155,7 @@ function MainApp() {
 
   return (
     <>
-      <Layout onNavigate={setAppView} balance={userProfile.balance} onAddFunds={handleAddFunds}>
+      <Layout onNavigate={setAppView} balance={userProfile.balance} onAddFunds={handleAddFunds} userProfile={userProfile}>
         {renderContent()}
       </Layout>
 
@@ -174,7 +181,10 @@ function MainApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainApp />
+      <ThemeProvider>
+        <MainApp />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
+
