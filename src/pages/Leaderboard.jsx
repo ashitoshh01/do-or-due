@@ -1,82 +1,128 @@
 import React, { useEffect, useState } from 'react';
-import { Trophy, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { Crown, Trophy, Medal, Flame } from 'lucide-react';
 import { subscribeToLeaderboard } from '../services/dbService';
 import { useAuth } from '../context/AuthContext';
 
 const Leaderboard = () => {
     const [users, setUsers] = useState([]);
     const { currentUser } = useAuth();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsub = subscribeToLeaderboard((data) => {
             setUsers(data);
+            setLoading(false);
         });
         return () => unsub();
     }, []);
 
+    const top3 = users.slice(0, 3);
+    const rest = users.slice(3);
+
     return (
-        <div className="animate-in" style={{ paddingBottom: '40px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'hsl(var(--color-text-main))' }}>Leaderboard</h1>
+        <div className="leaderboard-container no-scrollbar">
+            <div className="leaderboard-header">
+                <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'hsl(var(--color-text-main))', marginBottom: '8px' }}>Leaderboard</h1>
                 <p style={{ color: 'hsl(var(--color-text-secondary))' }}>Top performers this week</p>
             </div>
 
-            <div className="card" style={{ maxWidth: '600px', margin: '0 auto', padding: '0' }}>
-                {users.map((user, index) => {
-                    // Determine background color
-                    let bgColor = 'transparent';
-                    if (index === 0) bgColor = '#EFBF04';      // Gold
-                    else if (index === 1) bgColor = '#666666'; // Silver
-                    else if (index === 2) bgColor = '#CE8946'; // Bronze
-                    else if (user.id === currentUser?.uid) bgColor = 'hsl(217, 91%, 95%)'; // Current User
+            {loading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
+            ) : (
+                <>
+                    {/* Podium Section */}
+                    {top3.length > 0 && (
+                        <div className="podium-grid">
+                            {/* Re-order for visual pyramid: 2, 1, 3 */}
+                            {top3.length >= 2 && <PodiumCard user={top3[1]} rank={2} isCurrentUser={top3[1].id === currentUser?.uid} />}
+                            {top3.length >= 1 && <PodiumCard user={top3[0]} rank={1} isCurrentUser={top3[0].id === currentUser?.uid} />}
+                            {top3.length >= 3 && <PodiumCard user={top3[2]} rank={3} isCurrentUser={top3[2].id === currentUser?.uid} />}
 
-                    // Determine text color (Top 3 get dark text, others default)
-                    const isTop3 = index < 3;
-                    const textColor = isTop3 ? '#0F172A' : 'hsl(var(--color-text-main))';
-                    const subTextColor = isTop3 ? 'rgba(15, 23, 42, 0.7)' : 'hsl(var(--color-text-secondary))';
-
-                    return (
-                        <div key={user.id || index} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '20px',
-                            borderBottom: index !== users.length - 1 ? '1px solid hsl(var(--color-border-light))' : 'none',
-                            backgroundColor: bgColor
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                <div style={{
-                                    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontWeight: 700, color: isTop3 ? '#0F172A' : 'hsl(var(--color-text-secondary))'
-                                }}>
-                                    {index + 1}
-                                </div>
-                                <div style={{
-                                    width: '40px', height: '40px', borderRadius: '50%',
-                                    backgroundColor: isTop3 ? 'rgba(255, 255, 255, 0.8)' : 'hsl(var(--color-bg-input))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    color: isTop3 ? '#0F172A' : 'hsl(var(--color-text-main))'
-                                }}>
-                                    {user.email?.charAt(0) || 'U'}
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: textColor }}>
-                                        {user.name || user.email.split('@')[0]}
-                                        {user.id === currentUser?.uid && <span style={{ fontSize: '10px', backgroundColor: '#DBEAFE', color: '#1E40AF', padding: '2px 6px', borderRadius: '4px' }}>YOU</span>}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: subTextColor }}>{user.streak || 0} day streak</div>
-                                </div>
-                            </div>
-
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontWeight: 700, color: textColor }}>{user.xp || 0} XP</div>
-                                {/* Change logic would require tracking previous rank, skipping for now as it needs more DB structure */}
-                            </div>
+                            {/* Handle edge case if fewer than 3 users but more than 0? 
+                                The logic above safely renders 1, 2, or 3 based on length.
+                            */}
                         </div>
-                    );
-                })}
+                    )}
+
+                    {/* List Section */}
+                    <div className="leaderboard-list">
+                        {rest.map((user, index) => (
+                            <LeaderboardRow
+                                key={user.id}
+                                user={user}
+                                rank={index + 4}
+                                isCurrentUser={user.id === currentUser?.uid}
+                            />
+                        ))}
+                    </div>
+
+                    {users.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'hsl(var(--color-text-secondary))' }}>
+                            <Trophy size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+                            <p>No active users yet. Be the first to join the race!</p>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
+};
+
+const PodiumCard = ({ user, rank, isCurrentUser }) => {
+    return (
+        <div className={`podium-card rank-${rank} ${isCurrentUser ? 'is-current-user-podium' : ''}`}>
+            {rank === 1 && (
+                <div className="podium-crown">
+                    <Crown size={32} fill="#F59E0B" />
+                </div>
+            )}
+
+            <div className="podium-avatar-container">
+                <div className="podium-avatar">
+                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="podium-rank-badge">
+                    #{rank}
+                </div>
             </div>
-            {users.length === 0 && <div style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--color-text-secondary))' }}>No active users yet. Be the first!</div>}
+
+            <div className="podium-name">
+                {user.name || user.email.split('@')[0]}
+                {isCurrentUser && <span className="you-tag" style={{ marginLeft: '6px' }}>YOU</span>}
+            </div>
+
+            <div className="podium-xp">
+                {user.xp || 0} XP
+            </div>
+        </div>
+    );
+};
+
+const LeaderboardRow = ({ user, rank, isCurrentUser }) => {
+    return (
+        <div className={`leaderboard-row ${isCurrentUser ? 'is-current-user' : ''}`} style={{ animationDelay: `${(rank - 3) * 0.05}s` }}>
+            <div className="row-rank">
+                {rank}
+            </div>
+
+            <div className="row-avatar">
+                {user.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+
+            <div className="row-info">
+                <div className="row-name">
+                    {user.name || user.email.split('@')[0]}
+                    {isCurrentUser && <span className="you-tag">YOU</span>}
+                </div>
+                <div className="row-streak">
+                    <Flame size={12} fill="currentColor" className="text-orange-500" />
+                    {user.streak || 0} day streak
+                </div>
+            </div>
+
+            <div className="row-xp">
+                {user.xp || 0} XP
+            </div>
         </div>
     );
 };
