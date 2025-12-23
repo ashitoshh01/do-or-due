@@ -18,7 +18,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 import { subscribeToTasks, subscribeToUser, addTask, deleteTask, updateTaskStatus, updateUserBalance, completeTask, addFunds, failTask } from './services/dbService';
 import { verifyProof } from './services/aiService';
-import { initializePayment } from './services/paymentService';
+import { verifyUTR, recordManualPayment } from './services/paymentService';
 
 function MainApp() {
   const { currentUser, loading } = useAuth();
@@ -126,7 +126,7 @@ function MainApp() {
     setShowFundsModal(true);
   };
 
-  const handlePaymentProceed = async (amount) => {
+  const handlePaymentProceed = async (amount, utr) => {
     setShowFundsModal(false);
 
     // Set processing flag to prevent duplicate credits
@@ -136,37 +136,40 @@ function MainApp() {
     }
     setIsProcessingPayment(true);
 
-    await initializePayment(amount, async (paymentId) => {
-      try {
-        // Add funds to database - this should only run ONCE
-        await addFunds(currentUser.uid, amount);
+    try {
+      // 1. Verify UTR (Format & Uniqueness)
+      await verifyUTR(utr);
 
-        // Force local update for immediate feedback (prevents perceived lag)
-        setUserProfile(prev => ({ ...prev, balance: (prev.balance || 0) + amount }));
+      // 2. Record Transaction
+      await recordManualPayment(currentUser.uid, amount, utr);
 
-        setPopup({
-          isOpen: true,
-          title: 'Payment Successful',
-          message: `${amount} DueCoins have been added to your account. Payment ID: ${paymentId}`,
-          type: 'success',
-          onClose: () => {
-            // Reset processing flag only when popup is closed
-            setIsProcessingPayment(false);
-          }
-        });
-      } catch (error) {
-        console.error("Payment sync failed:", error);
-        setPopup({
-          isOpen: true,
-          title: 'Sync Error',
-          message: 'Payment processed but balance update failed. Please refresh the page.',
-          type: 'warning',
-          onClose: () => {
-            setIsProcessingPayment(false);
-          }
-        });
-      }
-    }, currentUser.email);
+      // 3. Add Funds to User Wallet
+      await addFunds(currentUser.uid, amount);
+
+      // 4. Update UI -> Optimistic update for instant feedback
+      setUserProfile(prev => ({ ...prev, balance: (prev.balance || 0) + amount }));
+
+      setPopup({
+        isOpen: true,
+        title: 'Payment Successful',
+        message: `₹${amount} added successfully! Reference: ${utr}`,
+        type: 'success',
+        onClose: () => {
+          setIsProcessingPayment(false);
+        }
+      });
+    } catch (error) {
+      console.error("Payment failed:", error);
+      setPopup({
+        isOpen: true,
+        title: 'Verification Failed',
+        message: error.message || 'Could not verify transaction. Please try again.',
+        type: 'error',
+        onClose: () => {
+          setIsProcessingPayment(false);
+        }
+      });
+    }
   };
 
   // 3. Render Logic

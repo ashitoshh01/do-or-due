@@ -1,52 +1,49 @@
-// Razorpay Payment Service
+import { db } from "../firebase";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 
-const loadRazorpay = () => {
-    return new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
-        document.body.appendChild(script);
-    });
-};
-
-export const initializePayment = async (amount, onSuccess, userEmail) => {
-    // We already added script in index.html, but safety check or just assume it's there.
-    // Actually, better to just use window.Razorpay if blocked by CSP or strict mode.
-
-    if (!window.Razorpay) {
-        alert("Razorpay SDK not loaded. Check internet connection.");
-        return;
+/**
+ * Verifies if the UTR is valid (12 digits) and unique.
+ * @param {string} utr - The 12-digit transaction ID.
+ * @returns {Promise<boolean>} - True if valid, throws Error if invalid.
+ */
+export const verifyUTR = async (utr) => {
+    // 1. Format Check (12 digits)
+    const utrRegex = /^\d{12}$/;
+    if (!utrRegex.test(utr)) {
+        throw new Error("Invalid UTR format. Must be exactly 12 digits.");
     }
 
-    const options = {
-        key: "rzp_test_RuDkV1ujJGsRZF",
-        amount: amount * 100, // Amount in paise (100 INR = 10000 paise)
-        currency: "INR",
-        name: "Do Or Due",
-        description: "Purchase DueCoins",
-        image: "https://vitejs.dev/logo.svg", // Placeholder logo
-        handler: function (response) {
-            // Payment Success!
-            // In a real app, you would verify signature on backend.
-            // Here we trust the client for the prototype (Test Mode).
-            console.log("Payment ID: ", response.razorpay_payment_id);
-            onSuccess(response.razorpay_payment_id);
-        },
-        prefill: {
-            email: userEmail || "user@example.com",
-            contact: "9999999999" // Dummy contact
-        },
-        theme: {
-            color: "#0F172A" // Clean SaaS Navy
-        }
-    };
+    // 2. Uniqueness Check
+    const transactionsRef = collection(db, "transactions");
+    const q = query(transactionsRef, where("utr", "==", utr));
+    const querySnapshot = await getDocs(q);
 
-    const rzp1 = new window.Razorpay(options);
+    if (!querySnapshot.empty) {
+        throw new Error("This UTR has already been used. Please check your Reference ID.");
+    }
 
-    rzp1.on('payment.failed', function (response) {
-        alert("Payment Failed: " + response.error.description);
-    });
+    return true;
+};
 
-    rzp1.open();
+/**
+ * Records a manual UPI payment transaction in Firestore.
+ * @param {string} userId - The ID of the user.
+ * @param {number} amount - The amount in INR.
+ * @param {string} utr - The transaction UTR.
+ */
+export const recordManualPayment = async (userId, amount, utr) => {
+    try {
+        await addDoc(collection(db, "transactions"), {
+            userId,
+            amount: parseFloat(amount),
+            utr,
+            method: 'UPI_MANUAL',
+            status: 'completed', // Trust model: auto-complete
+            createdAt: serverTimestamp()
+        });
+        return true;
+    } catch (error) {
+        console.error("Error recording payment:", error);
+        throw new Error("Failed to record transaction.");
+    }
 };

@@ -72,11 +72,15 @@ export const updateUserBalance = async (userId, newBalance) => {
 };
 
 export const addFunds = async (userId, amount) => {
+    console.log(`Adding funds to ${userId}: ${amount}`);
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+    // Use setDoc with merge to ensure it works even if fields are missing
+    await setDoc(userRef, {
         balance: increment(amount),
-        "stats.earned": increment(0)
-    });
+        stats: {
+            earned: increment(amount)
+        }
+    }, { merge: true });
 };
 
 export const updateUserProfile = async (userId, updates) => {
