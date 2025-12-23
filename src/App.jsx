@@ -193,8 +193,8 @@ function MainApp() {
       // 3. Add Funds to User Wallet
       await addFunds(currentUser.uid, amount);
 
-      // 4. Update UI -> Optimistic update for instant feedback
-      setUserProfile(prev => ({ ...prev, balance: (prev.balance || 0) + amount }));
+      // 4. Update UI - Removed manual update to prevent double-count (Listener handles it)
+      // setUserProfile(prev => ({ ...prev, balance: (prev.balance || 0) + amount }));
 
       setPopup({
         isOpen: true,
