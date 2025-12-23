@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2 } from 'lucide-react';
+import TaskChatAssistant from '../components/TaskChatAssistant';
 
 const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShowPopup }) => {
     const [filter, setFilter] = useState('all');
+    const [chatTask, setChatTask] = useState(null); // Track which task has chat open
 
     const pendingCount = history.filter(h => h.status === 'pending').length;
     const completedCount = history.filter(h => h.status === 'success').length;
@@ -67,13 +69,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
 
                 {/* Left Column: Create Task Form */}
                 <div className="card" style={{ height: 'fit-content' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Plus size={20} /> Create New Task
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', color: 'hsl(var(--color-text-main))' }}>
+                        <Plus size={20} color="hsl(var(--color-text-main))" /> Create New Task
                     </h2>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Task Title *</label>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>Task Title *</label>
                             <input
                                 className="input-field"
                                 placeholder="What do you need to do?"
@@ -82,7 +84,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Description</label>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>Description</label>
                             <textarea
                                 className="input-field"
                                 placeholder="Add details about your task..."
@@ -125,19 +127,24 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                             </div>
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Stake Amount (DueCoins) *</label>
-                            <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid orange' }} />
-                                <input
-                                    type="number"
-                                    placeholder="Enter amount"
-                                    style={{ border: 'none', outline: 'none', width: '100%' }}
-                                    value={newTask.stake}
-                                    onChange={e => setNewTask({ ...newTask, stake: e.target.value })}
-                                />
-                            </div>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>Stake Amount (DueCoins) *</label>
+                            <input
+                                type="number"
+                                className="input-field"
+                                placeholder="Minimum 20 coins"
+                                min="20"
+                                step="10"
+                                value={newTask.stake}
+                                onChange={e => setNewTask({ ...newTask, stake: e.target.value })}
+                                style={{
+                                    paddingLeft: '40px',
+                                    backgroundImage: 'radial-gradient(circle at 16px center, transparent 6px, orange 7px, orange 8px, transparent 9px)',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: '12px center'
+                                }}
+                            />
                             <div style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginTop: '6px' }}>
-                                Your balance: {balance} DueCoins
+                                Your balance: {balance} DueCoins • Minimum stake: 20 coins
                             </div>
                         </div>
 
@@ -150,6 +157,18 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                         onShowPopup({
                                             title: 'Missing Information',
                                             message: 'Please fill in both title and stake amount.',
+                                            type: 'warning'
+                                        });
+                                    }
+                                    return;
+                                }
+
+                                // Validate minimum stake
+                                if (parseInt(newTask.stake) < 20) {
+                                    if (onShowPopup) {
+                                        onShowPopup({
+                                            title: 'Insufficient Stake',
+                                            message: 'Minimum stake amount is 20 DueCoins. Please increase your stake.',
                                             type: 'warning'
                                         });
                                     }
@@ -184,11 +203,11 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                 {/* Right Column: Your Tasks (New Design) */}
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h2 style={{ fontSize: '18px', fontWeight: 700 }}>Your Tasks</h2>
-                        <div style={{ backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px', display: 'flex' }}>
-                            <button onClick={() => setFilter('all')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'all' ? 'white' : 'transparent', boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>All</button>
-                            <button onClick={() => setFilter('pending')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'pending' ? 'white' : 'transparent', boxShadow: filter === 'pending' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', color: filter === 'pending' ? 'black' : 'hsl(var(--color-text-secondary))', cursor: 'pointer' }}>Pending</button>
-                            <button onClick={() => setFilter('done')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'done' ? 'white' : 'transparent', boxShadow: filter === 'done' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', color: filter === 'done' ? 'black' : 'hsl(var(--color-text-secondary))', cursor: 'pointer' }}>Done</button>
+                        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>Your Tasks</h2>
+                        <div style={{ backgroundColor: 'hsl(var(--color-bg-input))', padding: '4px', borderRadius: '8px', display: 'flex', border: '1px solid hsl(var(--color-border))' }}>
+                            <button onClick={() => setFilter('all')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'all' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: filter === 'all' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', transition: 'all 0.2s' }}>All</button>
+                            <button onClick={() => setFilter('pending')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'pending' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'pending' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, color: filter === 'pending' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Pending</button>
+                            <button onClick={() => setFilter('done')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'done' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'done' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, color: filter === 'done' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Done</button>
                         </div>
                     </div>
 
@@ -199,10 +218,10 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                 {filteredHistory.map(item => (
                                     <div key={item.id} style={{
                                         padding: '20px',
-                                        backgroundColor: 'white',
+                                        backgroundColor: 'hsl(var(--color-bg-card))',
                                         borderRadius: '16px',
                                         boxShadow: 'var(--shadow-sm)',
-                                        border: '1px solid #E2E8F0',
+                                        border: '1px solid hsl(var(--color-border))',
                                         position: 'relative'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -215,14 +234,14 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                                 }}>
                                                     {item.status === 'success' ? <Check size={12} /> : <Clock size={12} />} {item.status.toUpperCase()}
                                                 </div>
-                                                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>{item.objective}</h3>
-                                                <p style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>EARLY</p>
+                                                <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>{item.objective}</h3>
+                                                <p style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))', marginTop: '4px' }}>EARLY</p>
                                             </div>
 
                                             <div style={{
                                                 display: 'flex', alignItems: 'center', gap: '4px',
-                                                backgroundColor: '#F8FAFC', padding: '6px 10px', borderRadius: '8px',
-                                                fontWeight: 700, fontSize: '14px', color: '#0F172A'
+                                                backgroundColor: 'hsl(var(--color-bg-input))', padding: '6px 10px', borderRadius: '8px',
+                                                fontWeight: 700, fontSize: '14px', color: 'hsl(var(--color-text-main))'
                                             }}>
                                                 <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid orange' }} />
                                                 {item.stake}
@@ -241,7 +260,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                                 <button
                                                     onClick={() => onUploadProof(item)}
                                                     style={{
-                                                        flex: 1, backgroundColor: '#0F172A', color: 'white',
+                                                        flex: 1, backgroundColor: 'hsl(var(--color-text-main))', color: 'hsl(var(--color-bg-card))',
                                                         padding: '12px', borderRadius: '8px', border: 'none',
                                                         fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer'
                                                     }}
@@ -249,17 +268,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                                     <Upload size={16} /> Upload Proof
                                                 </button>
                                                 <button
-                                                    onClick={() => onShowPopup && onShowPopup({
-                                                        title: 'Coming Soon',
-                                                        message: 'Chat feature is under development and will be available soon!',
-                                                        type: 'info'
-                                                    })}
+                                                    onClick={() => setChatTask(item)}
                                                     style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
                                                     <MessageSquare size={20} color="white" />
-                                                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', backgroundColor: '#FBBF24', borderRadius: '50%', border: '2px solid white' }} />
+                                                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', backgroundColor: '#22C55E', borderRadius: '50%', border: '2px solid white' }} />
                                                 </button>
                                                 <button onClick={() => onDelete(item.id)} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                                    <Trash2 size={20} color="#94A3B8" />
+                                                    <Trash2 size={20} color="hsl(var(--color-text-secondary))" />
                                                 </button>
                                             </div>
                                         )}
@@ -268,9 +283,9 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                 ))}
                             </div>
                         ) : (
-                            <div style={{ textAlign: 'center', backgroundColor: 'white', padding: '40px', borderRadius: '16px', width: '100%' }}>
-                                <div style={{ width: '48px', height: '48px', backgroundColor: '#F1F5F9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', margin: '0 auto' }}>
-                                    <div style={{ width: '24px', height: '4px', backgroundColor: '#CBD5E1', borderRadius: '2px', boxShadow: '0 8px 0 #CBD5E1' }} />
+                            <div style={{ textAlign: 'center', backgroundColor: 'hsl(var(--color-bg-card))', padding: '40px', borderRadius: '16px', width: '100%', border: '1px solid hsl(var(--color-border))' }}>
+                                <div style={{ width: '48px', height: '48px', backgroundColor: 'hsl(var(--color-bg-input))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', margin: '0 auto' }}>
+                                    <div style={{ width: '24px', height: '4px', backgroundColor: 'hsl(var(--color-border))', borderRadius: '2px', boxShadow: '0 8px 0 hsl(var(--color-border))' }} />
                                 </div>
                                 <p style={{ color: 'hsl(var(--color-text-secondary))', fontSize: '14px' }}>No tasks found for "{filter}".</p>
                             </div>
@@ -278,6 +293,14 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                     </div>
                 </div>
             </div>
+
+            {/* Task Chat Assistant Modal */}
+            {chatTask && (
+                <TaskChatAssistant
+                    task={chatTask}
+                    onClose={() => setChatTask(null)}
+                />
+            )}
         </div>
     );
 };

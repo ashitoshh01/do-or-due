@@ -34,6 +34,7 @@ function MainApp() {
   const [showFundsModal, setShowFundsModal] = useState(false);
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag to prevent double credit
 
   // 1. Data Subscriptions (Only run if logged in)
   useEffect(() => {
@@ -128,8 +129,16 @@ function MainApp() {
   const handlePaymentProceed = async (amount) => {
     setShowFundsModal(false);
 
+    // Set processing flag to prevent duplicate credits
+    if (isProcessingPayment) {
+      console.warn('Payment already processing, ignoring duplicate call');
+      return;
+    }
+    setIsProcessingPayment(true);
+
     await initializePayment(amount, async (paymentId) => {
       try {
+        // Add funds to database - this should only run ONCE
         await addFunds(currentUser.uid, amount);
 
         // Force local update for immediate feedback (prevents perceived lag)
@@ -139,7 +148,11 @@ function MainApp() {
           isOpen: true,
           title: 'Payment Successful',
           message: `${amount} DueCoins have been added to your account. Payment ID: ${paymentId}`,
-          type: 'success'
+          type: 'success',
+          onClose: () => {
+            // Reset processing flag only when popup is closed
+            setIsProcessingPayment(false);
+          }
         });
       } catch (error) {
         console.error("Payment sync failed:", error);
@@ -147,7 +160,10 @@ function MainApp() {
           isOpen: true,
           title: 'Sync Error',
           message: 'Payment processed but balance update failed. Please refresh the page.',
-          type: 'warning'
+          type: 'warning',
+          onClose: () => {
+            setIsProcessingPayment(false);
+          }
         });
       }
     }, currentUser.email);
@@ -253,7 +269,13 @@ function MainApp() {
       {/* Custom Popup */}
       <Popup
         isOpen={popup.isOpen}
-        onClose={() => setPopup({ ...popup, isOpen: false })}
+        onClose={() => {
+          // Call custom onClose if provided (for payment processing flag reset)
+          if (popup.onClose) {
+            popup.onClose();
+          }
+          setPopup({ ...popup, isOpen: false });
+        }}
         title={popup.title}
         message={popup.message}
         type={popup.type}

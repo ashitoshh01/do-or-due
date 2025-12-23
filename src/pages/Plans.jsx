@@ -88,7 +88,7 @@ const Plans = ({ onShowPopup }) => {
                         style={{
                             position: 'relative',
                             padding: '20px 16px',
-                            border: plan.highlighted ? '2px solid hsl(var(--color-text-main))' : '1px solid hsl(var(--color-border))',
+                            border: plan.highlighted ? '2px solid #fea100' : '1px solid hsl(var(--color-border))',
                             transform: plan.highlighted ? 'scale(1.04)' : 'scale(1)',
                             transition: 'all 0.3s ease',
                             boxShadow: plan.highlighted ? 'var(--shadow-lg)' : 'var(--shadow-sm)'
@@ -101,8 +101,8 @@ const Plans = ({ onShowPopup }) => {
                                 top: '-9px',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
-                                background: 'hsl(var(--color-text-main))',
-                                color: 'white',
+                                background: '#fea100',
+                                color: '#0F172A',
                                 padding: '3px 12px',
                                 borderRadius: '9px',
                                 fontSize: '10px',
