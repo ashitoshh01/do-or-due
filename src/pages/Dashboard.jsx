@@ -255,6 +255,68 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                             </span>
                                         </div>
 
+                                        {/* Proof Image Display */}
+                                        {item.proofUrl && (
+                                            <div style={{
+                                                marginTop: '16px',
+                                                padding: '12px',
+                                                backgroundColor: 'hsl(var(--color-bg-input))',
+                                                borderRadius: '12px',
+                                                border: '1px solid hsl(var(--color-border))'
+                                            }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'flex-start',
+                                                    gap: '12px'
+                                                }}>
+                                                    <img
+                                                        src={item.proofUrl}
+                                                        alt="Proof"
+                                                        style={{
+                                                            width: '80px',
+                                                            height: '80px',
+                                                            objectFit: 'cover',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer',
+                                                            border: '2px solid hsl(var(--color-border))'
+                                                        }}
+                                                        onClick={() => window.open(item.proofUrl, '_blank')}
+                                                    />
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{
+                                                            fontSize: '13px',
+                                                            fontWeight: 600,
+                                                            color: 'hsl(var(--color-text-main))',
+                                                            marginBottom: '4px'
+                                                        }}>
+                                                            Submitted Proof
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '12px',
+                                                            color: 'hsl(var(--color-text-secondary))',
+                                                            marginBottom: '8px'
+                                                        }}>
+                                                            {item.status === 'pending_review' && '⏳ Under Admin Review'}
+                                                            {item.status === 'success' && '✅ Approved by Admin'}
+                                                            {item.status === 'failed' && '❌ Rejected by Admin'}
+                                                        </div>
+                                                        {item.rejectionReason && (
+                                                            <div style={{
+                                                                fontSize: '11px',
+                                                                color: '#EF4444',
+                                                                backgroundColor: '#FEF2F2',
+                                                                padding: '6px 8px',
+                                                                borderRadius: '6px',
+                                                                marginTop: '4px'
+                                                            }}>
+                                                                Reason: {item.rejectionReason}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {item.status === 'pending' && (
                                             <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
                                                 <button

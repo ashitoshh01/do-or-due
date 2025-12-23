@@ -15,17 +15,7 @@ const AdminLogin = ({ onLogin }) => {
 
         try {
             await adminLogin(email, password);
-            // Call parent handler to update App state if necessary, 
-            // but mainly we just need to navigate to the portal.
-            // We'll rely on the localStorage token for protection.
             if (onLogin) onLogin();
-            // Since this component is likely rendered inside the App router,
-            // we might want to let the App handle the view switch, 
-            // OR if this is a route, navigate to /admin/portal
-
-            // For this non-router architecture (conditional rendering), 
-            // onLogin is passed from App.jsx to setAppView('admin_portal')
-
         } catch (err) {
             setError(err.message);
         } finally {
@@ -87,7 +77,7 @@ const AdminLogin = ({ onLogin }) => {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@doordue.com"
+                                placeholder="official@doordue.com"
                                 style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none' }}
                                 required
                             />
@@ -130,13 +120,13 @@ const AdminLogin = ({ onLogin }) => {
 
                 <div style={{ marginTop: '24px', textAlign: 'center' }}>
                     <button
-                        onClick={() => window.location.reload()} // Quick way to go back to main app for now
+                        onClick={() => window.location.href = '/'}
                         style={{
                             background: 'none', border: 'none', color: '#64748B',
                             fontSize: '13px', cursor: 'pointer', textDecoration: 'underline'
                         }}
                     >
-                        Back to DoOrDue
+                        ← Back to Home
                     </button>
                 </div>
             </div>

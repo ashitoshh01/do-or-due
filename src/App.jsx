@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './index.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Layout from './components/Layout';
@@ -29,7 +30,7 @@ function MainApp() {
   const { currentUser, loading } = useAuth();
 
   // State
-  const [authView, setAuthView] = useState('login'); // 'login' or 'signup'
+  const [authView, setAuthView] = useState('landing'); // 'landing', 'login', 'signup', or 'admin_login'
   const [appView, setAppView] = useState('dashboard'); // 'dashboard', 'leaderboard', etc.
 
   // Admin State
@@ -239,6 +240,7 @@ function MainApp() {
 
   // AUTH STACK
   if (!currentUser) {
+    if (authView === 'landing') return <Landing onNavigate={setAuthView} />;
     if (authView === 'signup') return <Signup onNavigate={setAuthView} />;
     // Check if user clicked "Admin Login" from Login page (we'll add a link)
     return <Login onNavigate={setAuthView} />;

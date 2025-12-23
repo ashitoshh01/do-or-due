@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Shield, Mail, Lock, Zap } from 'lucide-react';
-// Note: We'll assume the parent component handles navigation after login via user state
 
 import { createUserProfile } from '../services/dbService';
 
@@ -100,13 +99,13 @@ const Login = ({ onNavigate }) => {
                     Don't have an account? <button onClick={() => onNavigate('signup')} style={{ background: 'none', border: 'none', color: '#0F172A', fontWeight: 700, cursor: 'pointer' }}>Sign up</button>
                 </p>
 
-                {/* Admin Link */}
+                {/* Back to Landing */}
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                     <button
-                        onClick={() => onNavigate('admin_login')}
+                        onClick={() => onNavigate('landing')}
                         style={{ background: 'none', border: 'none', color: '#CBD5E1', fontSize: '11px', cursor: 'pointer' }}
                     >
-                        Admin Portal
+                        ← Back to Home
                     </button>
                 </div>
             </div>
