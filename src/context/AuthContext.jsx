@@ -5,7 +5,9 @@ import {
     signOut,
     onAuthStateChanged,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    updatePassword,
+    deleteUser
 } from "firebase/auth";
 import { auth } from "../firebase";
 import { createUserProfile } from "../services/dbService";
@@ -53,13 +55,29 @@ export function AuthProvider({ children }) {
         return unsubscribe;
     }, []);
 
+    function updateUserPassword(password) {
+        if (currentUser) {
+            return updatePassword(currentUser, password);
+        }
+        return Promise.reject("No user logged in");
+    }
+
+    function deleteUserAccount() {
+        if (currentUser) {
+            return deleteUser(currentUser);
+        }
+        return Promise.reject("No user logged in");
+    }
+
     const value = {
         currentUser,
         loading,
         signup,
         login,
         googleLogin,
-        logout
+        logout,
+        updateUserPassword,
+        deleteUserAccount
     };
 
     return (
