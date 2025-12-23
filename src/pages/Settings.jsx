@@ -1,155 +1,291 @@
 import React, { useState } from 'react';
-import { User, Save, Mail } from 'lucide-react';
-import AvatarWithEdit from '../components/AvatarWithEdit';
-import { updateUserProfile } from '../services/dbService';
+import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { updateUserProfile } from '../services/dbService';
+import AvatarWithEdit from '../components/AvatarWithEdit';
 
 const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
-    const { currentUser } = useAuth();
+    const { currentUser, logout, updateUserPassword, deleteUserAccount } = useAuth();
+    const { isDark, toggleTheme } = useTheme();
+
     const [name, setName] = useState(userProfile.name || '');
     const [selectedAvatar, setSelectedAvatar] = useState(userProfile.avatar || null);
     const [saving, setSaving] = useState(false);
 
+    // Password State
+    const [isPasswordExpanded, setIsPasswordExpanded] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
+    // Mock States for toggles
+    const [notifications, setNotifications] = useState(true);
+    const [emailUpdates, setEmailUpdates] = useState(false);
+
     const handleAvatarChange = async (newAvatar) => {
         setSelectedAvatar(newAvatar);
-        // Auto-save avatar change
         try {
-            await updateUserProfile(currentUser.uid, {
-                avatar: newAvatar
-            });
-            if (onProfileUpdate) {
-                onProfileUpdate({ ...userProfile, avatar: newAvatar });
-            }
+            await updateUserProfile(currentUser.uid, { avatar: newAvatar });
+            if (onProfileUpdate) onProfileUpdate({ ...userProfile, avatar: newAvatar });
         } catch (error) {
             console.error('Error updating avatar:', error);
-            if (onShowPopup) {
-                onShowPopup({
-                    title: 'Update Failed',
-                    message: 'Failed to update avatar. Please try again.',
-                    type: 'error'
-                });
-            }
+            onShowPopup?.({ title: 'Error', message: 'Failed to update avatar', type: 'error' });
         }
     };
-
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            await updateUserProfile(currentUser.uid, {
-                name
-            });
-            if (onShowPopup) {
-                onShowPopup({
-                    title: 'Success',
-                    message: 'Profile updated successfully!',
-                    type: 'success'
-                });
-            }
-            if (onProfileUpdate) {
-                onProfileUpdate({ ...userProfile, name });
-            }
+            await updateUserProfile(currentUser.uid, { name });
+            if (onProfileUpdate) onProfileUpdate({ ...userProfile, name });
+            onShowPopup?.({ title: 'Saved', message: 'Profile updated successfully!', type: 'success' });
         } catch (error) {
             console.error('Error updating profile:', error);
-            if (onShowPopup) {
-                onShowPopup({
-                    title: 'Update Failed',
-                    message: 'Failed to update profile. Please try again.',
-                    type: 'error'
-                });
-            }
+            onShowPopup?.({ title: 'Error', message: 'Failed to update profile', type: 'error' });
         } finally {
             setSaving(false);
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error("Failed to log out", error);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (newPassword.length < 6) {
+            onShowPopup?.({ title: 'Weak Password', message: 'Password must be at least 6 characters.', type: 'warning' });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            onShowPopup?.({ title: 'Mismatch', message: 'Passwords do not match.', type: 'warning' });
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            await updateUserPassword(newPassword);
+            onShowPopup?.({ title: 'Success', message: 'Password updated successfully!', type: 'success' });
+            setNewPassword('');
+            setConfirmPassword('');
+            setIsPasswordExpanded(false);
+        } catch (error) {
+            console.error("Password update error", error);
+            const msg = error.code === 'auth/requires-recent-login'
+                ? 'Security Check: Please log out and log in again to change your password.'
+                : (error.message || 'Failed to update password.');
+            onShowPopup?.({ title: 'Update Failed', message: msg, type: 'error' });
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        onShowPopup?.({
+            title: 'Delete Account?',
+            message: 'This will permanently delete your account and all data. This action cannot be undone.',
+            type: 'warning',
+            confirmButton: {
+                label: 'Delete Forever',
+                onClick: async () => {
+                    try {
+                        await deleteUserAccount();
+                        // Auth listener will handle redirect
+                    } catch (error) {
+                        console.error("Delete account error", error);
+                        const msg = error.code === 'auth/requires-recent-login'
+                            ? 'Security Check: Please log out and log in again to delete your account.'
+                            : (error.message || 'Failed to delete account.');
+                        onShowPopup?.({ title: 'Delete Failed', message: msg, type: 'error' });
+                    }
+                }
+            },
+            cancelButton: {
+                label: 'Cancel',
+                onClick: () => { } // Popup handles close
+            }
+        });
+    };
+
     return (
-        <div style={{ paddingBottom: '40px', maxWidth: '900px', margin: '0 auto' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>Settings</h1>
-            <p style={{ color: 'hsl(var(--color-text-secondary))', marginBottom: '32px' }}>
-                Manage your profile and account settings
-            </p>
-
-            {/* Profile Picture Section */}
-            <div className="card" style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: 'hsl(var(--color-text-main))' }}>
-                    Profile Picture
-                </h2>
-
-                {/* Avatar with Edit */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                    <AvatarWithEdit
-                        currentAvatar={selectedAvatar}
-                        onAvatarChange={handleAvatarChange}
-                        size={120}
-                        editable={true}
-                    />
-                    <p style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))', textAlign: 'center', maxWidth: '300px' }}>
-                        Hover over your avatar and click the edit icon to change
-                    </p>
+        <div className="settings-container animate-in">
+            <div className="settings-header">
+                <div>
+                    <h1 className="page-title">Settings</h1>
+                    <p className="page-subtitle">Manage your account and preferences</p>
                 </div>
+                <button
+                    className="btn btn-secondary"
+                    onClick={handleLogout}
+                    style={{ color: 'hsl(var(--color-accent-red))', borderColor: 'rgba(var(--color-accent-red), 0.2)' }}
+                >
+                    <LogOut size={16} />
+                    Log Out
+                </button>
             </div>
 
-            {/* Personal Information Section */}
-            <div className="card" style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: 'hsl(var(--color-text-main))' }}>
-                    Personal Information
-                </h2>
+            <div className="settings-grid">
+                {/* Visual Profile Card */}
+                <div className="settings-card profile-card">
+                    <div className="profile-cover"></div>
+                    <div className="profile-content">
+                        <div className="profile-avatar-wrapper">
+                            <AvatarWithEdit
+                                currentAvatar={selectedAvatar}
+                                onAvatarChange={handleAvatarChange}
+                                size={100}
+                                editable={true}
+                            />
+                        </div>
+                        <div className="profile-fields">
+                            <div className="form-group">
+                                <label>Display Name</label>
+                                <div className="input-wrapper">
+                                    <User size={16} />
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Enter your name"
+                                    />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Email Address</label>
+                                <div className="input-wrapper disabled">
+                                    <Mail size={16} />
+                                    <input
+                                        type="email"
+                                        value={currentUser?.email || ''}
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                className="btn btn-primary save-btn"
+                                onClick={handleSave}
+                                disabled={saving}
+                            >
+                                {saving ? <><div className="spinner-sm"></div> Saving...</> : <><Save size={16} /> Save Changes</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>
-                            <User size={14} style={{ display: 'inline', marginRight: '6px' }} />
-                            Display Name
-                        </label>
-                        <input
-                            className="input-field"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Enter your name"
-                        />
+                {/* Preferences Section */}
+                <div className="settings-column">
+                    <div className="settings-card">
+                        <div className="card-header">
+                            <Bell size={20} className="card-icon" />
+                            <h3>Preferences</h3>
+                        </div>
+                        <div className="card-body">
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <span className="setting-label">Dark Mode</span>
+                                    <span className="setting-desc">Switch between light and dark themes</span>
+                                </div>
+                                <button className={`toggle-btn ${isDark ? 'active' : ''}`} onClick={toggleTheme}>
+                                    <div className="toggle-handle">
+                                        {isDark ? <Moon size={12} /> : <Sun size={12} />}
+                                    </div>
+                                </button>
+                            </div>
+                            <div className="divider"></div>
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <span className="setting-label">Notifications</span>
+                                    <span className="setting-desc">Receive updates about your tasks</span>
+                                </div>
+                                <button
+                                    className={`toggle-btn ${notifications ? 'active' : ''}`}
+                                    onClick={() => setNotifications(!notifications)}
+                                >
+                                    <div className="toggle-handle"></div>
+                                </button>
+                            </div>
+                            <div className="divider"></div>
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <span className="setting-label">Email Updates</span>
+                                    <span className="setting-desc">Get occasional product emails</span>
+                                </div>
+                                <button
+                                    className={`toggle-btn ${emailUpdates ? 'active' : ''}`}
+                                    onClick={() => setEmailUpdates(!emailUpdates)}
+                                >
+                                    <div className="toggle-handle"></div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'hsl(var(--color-text-main))' }}>
-                            <Mail size={14} style={{ display: 'inline', marginRight: '6px' }} />
-                            Email Address
-                        </label>
-                        <input
-                            className="input-field"
-                            type="email"
-                            value={currentUser?.email || ''}
-                            disabled
-                            style={{ opacity: 0.6, cursor: 'not-allowed' }}
-                        />
-                        <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginTop: '6px' }}>
-                            Email cannot be changed
-                        </p>
+                    {/* Security & Danger Zone */}
+                    <div className="settings-card">
+                        <div className="card-header">
+                            <Shield size={20} className="card-icon" />
+                            <h3>Security</h3>
+                        </div>
+                        <div className="card-body">
+                            <button
+                                className="btn btn-outline full-width"
+                                style={{ marginBottom: '16px' }}
+                                onClick={() => setIsPasswordExpanded(!isPasswordExpanded)}
+                            >
+                                {isPasswordExpanded ? 'Cancel Change Password' : 'Change Password'}
+                            </button>
+
+                            {isPasswordExpanded && (
+                                <div className="animate-in" style={{ marginBottom: '24px', background: 'hsl(var(--color-bg-input))', padding: '16px', borderRadius: '8px' }}>
+                                    <div className="form-group">
+                                        <label>New Password</label>
+                                        <input
+                                            type="password"
+                                            className="input-field"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Min. 6 characters"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            className="input-field"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="Re-enter password"
+                                        />
+                                    </div>
+                                    <button
+                                        className="btn btn-primary full-width"
+                                        onClick={handleChangePassword}
+                                        disabled={passwordLoading}
+                                    >
+                                        {passwordLoading ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="danger-zone">
+                                <h4 className="danger-title">Danger Zone</h4>
+                                <p className="danger-desc">Once you delete your account, there is no going back. Please be certain.</p>
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={handleDeleteAccount}
+                                >
+                                    <Trash2 size={16} />
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* Save Button */}
-            <button
-                className="btn btn-primary"
-                onClick={handleSave}
-                disabled={saving}
-                style={{
-                    width: '100%',
-                    padding: '16px',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '10px',
-                    opacity: saving ? 0.6 : 1,
-                    cursor: saving ? 'not-allowed' : 'pointer'
-                }}
-            >
-                <Save size={18} />
-                {saving ? 'Saving...' : 'Save Changes'}
-            </button>
         </div>
     );
 };

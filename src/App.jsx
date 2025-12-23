@@ -16,6 +16,11 @@ import AddFundsModal from './components/AddFundsModal';
 import Popup from './components/Popup';
 import LoadingSpinner from './components/LoadingSpinner';
 
+// Admin Imports
+import AdminLogin from './pages/admin/AdminLogin';
+import ProofVerification from './pages/admin/ProofVerification';
+import { isAdminAuthenticated } from './services/adminService';
+
 import { subscribeToTasks, subscribeToUser, addTask, deleteTask, updateTaskStatus, updateUserBalance, completeTask, addFunds, failTask } from './services/dbService';
 import { verifyProof } from './services/aiService';
 import { initializePayment } from './services/paymentService';
@@ -27,6 +32,9 @@ function MainApp() {
   const [authView, setAuthView] = useState('login'); // 'login' or 'signup'
   const [appView, setAppView] = useState('dashboard'); // 'dashboard', 'leaderboard', etc.
 
+  // Admin State
+  const [isAdmin, setIsAdmin] = useState(isAdminAuthenticated());
+
   const [tasks, setTasks] = useState([]);
   const [userProfile, setUserProfile] = useState({ balance: 0 });
   const [verificationTask, setVerificationTask] = useState(null);
@@ -36,9 +44,14 @@ function MainApp() {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag to prevent double credit
 
-  // 1. Data Subscriptions (Only run if logged in)
+  // Check admin status on load
   useEffect(() => {
-    if (!currentUser) return;
+    setIsAdmin(isAdminAuthenticated());
+  }, []);
+
+  // 1. Data Subscriptions (only if normal user logged in AND not in admin mode)
+  useEffect(() => {
+    if (!currentUser || isAdmin) return;
 
     // Reset app view to dashboard on fresh login
     setAppView('dashboard');
@@ -50,7 +63,7 @@ function MainApp() {
       unsubUser();
       unsubTasks();
     }
-  }, [currentUser]);
+  }, [currentUser, isAdmin]);
 
   // 2. Handlers
   const handleCommit = async (taskData) => {
@@ -84,8 +97,42 @@ function MainApp() {
       setIsUploading(false);
 
       if (result.verified) {
-        setAppView('result_success');
-        await completeTask(currentUser.uid, verificationTask.id, verificationTask.stake);
+        // AI Verified locally - For this prototype, we mark as 'success' immediately
+        // BUT we also want to support Admin Review. 
+        // If we want Admin to review EVERYTHING, we should set status to 'pending_review' here instead.
+        // However, user requested "Proof Checks" page for admin.
+        // Let's modify logic: Mark as 'pending_review' so it shows up in Admin Portal.
+        // Wait, the prompt says "Admin Portal – Proof Verification Page... This page will list all proofs submitted by users."
+        // And "On approval: Mark the task as completed."
+        // This implies the AI check is just a preliminary filter or purely client side, 
+        // OR the 'success' state currently bypasses admin.
+
+        // DECISION: To properly demonstrate Admin Portal, I will set status to 'pending_review' 
+        // so the Admin HAS to approve it for the user to get money.
+        // BUT to keep the user experience smooth for the demo (if admin is offline), 
+        // maybe we can double-write? 
+        // No, let's go with "pending_review".
+
+        // Actually, for the sake of the 'TaskResult' screen showing "Success", 
+        // I will keep the local show as success but DB status as 'pending_review'.
+
+        // UPDATE: Changed dbService flow. I will manually update status here to 'pending_review' w/ proofUrl.
+        // We need to upload the image to storage (or simulate it). 
+        // For local prototype without storage, I'll use a data URL (not scalable but works for demo).
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+          const base64data = reader.result;
+
+          // Set to pending_review for Admin to pick up
+          await updateTaskStatus(currentUser.uid, verificationTask.id, 'pending_review', base64data);
+
+          // Show "Under Review" screen instead of instant success? 
+          // Or show Success screen with a note "Sent for verification".
+          setAppView('result_review');
+        };
+
       } else {
         setAppView('result_fail');
         await failTask(currentUser.uid, verificationTask.id);
@@ -171,7 +218,15 @@ function MainApp() {
 
   // 3. Render Logic
 
+  // ADMIN PORTAL ROUTING
+  if (isAdmin) {
+    return <ProofVerification onLogout={() => { setIsAdmin(false); setAppView('login'); }} />;
+  }
 
+  // ADMIN LOGIN PAGE (Special Route)
+  if (authView === 'admin_login') {
+    return <AdminLogin onLogin={() => setIsAdmin(true)} />;
+  }
 
   // LOADING STATE
   if (loading) {
@@ -185,6 +240,7 @@ function MainApp() {
   // AUTH STACK
   if (!currentUser) {
     if (authView === 'signup') return <Signup onNavigate={setAuthView} />;
+    // Check if user clicked "Admin Login" from Login page (we'll add a link)
     return <Login onNavigate={setAuthView} />;
   }
 
@@ -216,6 +272,26 @@ function MainApp() {
         return <TaskResult result="success" task={currentTask || { stake: 0 }} onHome={() => setAppView('dashboard')} />;
       case 'result_fail':
         return <TaskResult result="failure" task={currentTask || { stake: 0 }} onHome={() => setAppView('dashboard')} />;
+      case 'result_review':
+        // New State for "Sent to Admin"
+        return (
+          <div className="animate-in" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '500px', margin: '0 auto' }}>
+            <div style={{ width: '80px', height: '80px', background: '#F0F9FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#0284C7' }}>
+              <LoadingSpinner size="md" />
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--color-text-main))', marginBottom: '16px' }}>Under Review</h2>
+            <p style={{ color: 'hsl(var(--color-text-secondary))', lineHeight: '1.6', marginBottom: '32px' }}>
+              Great job! Your proof has been verified by our AI and sent to an admin for final approval. Your rewards will be credited once approved.
+            </p>
+            <button
+              onClick={() => setAppView('dashboard')}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '16px' }}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        );
       default:
         return <Dashboard onCreate={handleCommit} onUploadProof={handleUploadClick} onDelete={handleDelete} history={tasks} balance={userProfile.balance} />;
     }

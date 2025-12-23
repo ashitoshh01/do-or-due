@@ -100,6 +100,15 @@ const Login = ({ onNavigate }) => {
                     Don't have an account? <button onClick={() => onNavigate('signup')} style={{ background: 'none', border: 'none', color: '#0F172A', fontWeight: 700, cursor: 'pointer' }}>Sign up</button>
                 </p>
 
+                {/* Admin Link */}
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                    <button
+                        onClick={() => onNavigate('admin_login')}
+                        style={{ background: 'none', border: 'none', color: '#CBD5E1', fontSize: '11px', cursor: 'pointer' }}
+                    >
+                        Admin Portal
+                    </button>
+                </div>
             </div>
         </div>
     );
