@@ -14,10 +14,13 @@
     "@tensorflow/tfjs": "^4.22.0",
     "date-fns": "^4.1.0",
     "firebase": "^12.7.0",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
+    "react-countdown": "^2.3.6",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.0",
+    "react-parallax-tilt": "^1.7.315",
     "react-qr-code": "^2.0.18",
     "recharts": "^3.6.0"
   },

@@ -3,6 +3,8 @@ import { ArrowLeft, Lock, Calendar, Flag, Clock } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+import CustomTimeInput from '../components/CustomTimeInput';
+
 const CustomDateTrigger = React.forwardRef(({ value, onClick }, ref) => (
     <button
         type="button"
@@ -75,7 +77,8 @@ const CreateTask = ({ onBack, onCommit }) => {
                         <DatePicker
                             selected={deadline}
                             onChange={(date) => setDeadline(date)}
-                            showTimeSelect
+                            showTimeInput
+                            customTimeInput={<CustomTimeInput />}
                             dateFormat="MMM d, h:mm aa"
                             customInput={<CustomDateTrigger />}
                         />

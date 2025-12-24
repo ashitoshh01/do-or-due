@@ -101,10 +101,21 @@ const Login = ({ onNavigate }) => {
                 </p>
 
                 {/* Admin Link */}
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <div style={{ marginTop: '32px', textAlign: 'center' }}>
                     <button
                         onClick={() => onNavigate('admin_login')}
-                        style={{ background: 'none', border: 'none', color: '#CBD5E1', fontSize: '11px', cursor: 'pointer' }}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#94A3B8',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            opacity: 0.6,
+                            transition: 'opacity 0.2s'
+                        }}
+                        onMouseEnter={e => e.target.style.opacity = 1}
+                        onMouseLeave={e => e.target.style.opacity = 0.6}
                     >
                         Admin Portal
                     </button>

@@ -28,6 +28,7 @@ export const createUserProfile = async (userId, email) => {
             xp: 0,
             streak: 0,
             createdAt: new Date(),
+            defaultCharity: 1, // Defaulting to St. Jude (ID: 1) as "from our side"
             stats: {
                 success: 0,
                 failed: 0,

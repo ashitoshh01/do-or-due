@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2, ChevronRight } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+
+import Countdown from "react-countdown";
+
+import CustomTimeInput from '../components/CustomTimeInput';
+import CountdownTimer from '../components/CountdownTimer';
+import CharityModal from '../components/CharityModal';
+import { subscribeToUser } from '../services/dbService';
+import { CHARITIES } from '../constants/charities';
 
 // Custom Trigger Component for DatePicker to look "Cool" and have pointer cursor
 const CustomDateInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
@@ -43,22 +52,34 @@ const CustomDateInput = React.forwardRef(({ value, onClick, placeholder }, ref) 
 
         {/* Hover effect handled via CSS class 'custom-date-trigger' in index.css or style tag */}
         <style>{`
-            .custom-date-trigger:hover {
-                border-color: hsl(var(--color-primary));
-                transform: translateY(-1px);
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            }
-            .custom-date-trigger:active {
-                transform: translateY(0);
-            }
-        `}</style>
+    .custom - date - trigger:hover {
+    border - color: hsl(var(--color - primary));
+    transform: translateY(-1px);
+    box - shadow: 0 4px 6px - 1px rgba(0, 0, 0, 0.1), 0 2px 4px - 1px rgba(0, 0, 0, 0.06);
+}
+            .custom - date - trigger:active {
+    transform: translateY(0);
+}
+`}</style>
     </div>
 ));
 import TaskChatAssistant from '../components/TaskChatAssistant';
+import TaskCard from '../components/TaskCard';
 
-const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShowPopup }) => {
+const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balance, onShowPopup }) => {
     const [filter, setFilter] = useState('all');
     const [chatTask, setChatTask] = useState(null); // Track which task has chat open
+    const [charityModalTask, setCharityModalTask] = useState(null); // Track which task to donate for
+
+    const [userProfile, setUserProfile] = useState(null);
+    const { currentUser } = useAuth();
+
+    useEffect(() => {
+        if (currentUser) {
+            const unsub = subscribeToUser(currentUser.uid, (data) => setUserProfile(data));
+            return () => unsub();
+        }
+    }, [currentUser]);
 
     const pendingCount = history.filter(h => h.status === 'pending').length;
     const completedCount = history.filter(h => h.status === 'success').length;
@@ -75,11 +96,44 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
     const [newTask, setNewTask] = useState({ title: '', desc: '', deadline: null, stake: '' });
 
     const filteredHistory = history.filter(item => {
+        const isFailed = item.status === 'failed' || (item.status === 'pending' && item.deadline && (new Date(item.deadline.toDate ? item.deadline.toDate() : item.deadline) <= new Date()));
+
         if (filter === 'all') return true;
-        if (filter === 'pending') return item.status === 'pending';
+        if (filter === 'active') return item.status === 'pending' && !isFailed;
+        if (filter === 'review') return item.status === 'pending_review';
         if (filter === 'done') return item.status === 'success';
+        if (filter === 'failed') return isFailed;
         return true;
     });
+
+    const handleDonateClick = (task) => {
+        if (userProfile?.defaultCharity) {
+            // Auto-donate
+            const charity = CHARITIES.find(c => c.id === userProfile.defaultCharity);
+            const charityName = charity ? charity.name : 'Unknown Charity';
+
+            handleDonate(userProfile.defaultCharity);
+
+            if (onShowPopup) onShowPopup({
+                title: 'Auto-Donation Successful',
+                message: `Your stake has been donated to your default charity: ${charityName}`,
+                type: 'success'
+            });
+        } else {
+            // Open Modal
+            setCharityModalTask(task);
+        }
+    };
+
+    const handleDonate = async (charityId) => {
+        // Here we would record the donation
+        if (!userProfile?.defaultCharity && onShowPopup) onShowPopup({
+            title: 'Donation Successful',
+            message: 'Your stake has been donated to the selected charity. Thank you for your generosity!',
+            type: 'success'
+        });
+        setCharityModalTask(null);
+    };
 
     return (
         <div style={{ paddingBottom: '40px' }}>
@@ -154,20 +208,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                 <DatePicker
                                     selected={newTask.deadline}
                                     onChange={(date) => setNewTask({ ...newTask, deadline: date })}
-                                    showTimeSelect
+                                    showTimeInput
+                                    customTimeInput={<CustomTimeInput />}
                                     dateFormat="MMM d, yyyy h:mm aa"
                                     placeholderText="Pick a date & time"
                                     minDate={new Date()}
                                     customInput={<CustomDateInput />}
                                     wrapperClassName="react-datepicker-wrapper"
-                                    popperModifiers={[
-                                        {
-                                            name: "offset",
-                                            options: {
-                                                offset: [0, 8],
-                                            },
-                                        },
-                                    ]}
                                 />
                             </div>
                         </div>
@@ -249,10 +296,12 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>Your Tasks</h2>
-                        <div style={{ backgroundColor: 'hsl(var(--color-bg-input))', padding: '4px', borderRadius: '8px', display: 'flex', border: '1px solid hsl(var(--color-border))' }}>
-                            <button onClick={() => setFilter('all')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'all' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: filter === 'all' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', transition: 'all 0.2s' }}>All</button>
-                            <button onClick={() => setFilter('pending')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'pending' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'pending' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, color: filter === 'pending' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Pending</button>
-                            <button onClick={() => setFilter('done')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'done' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'done' ? 'var(--shadow-sm)' : 'none', fontSize: '13px', fontWeight: 600, color: filter === 'done' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Done</button>
+                        <div style={{ backgroundColor: 'hsl(var(--color-bg-input))', padding: '4px', borderRadius: '8px', display: 'flex', gap: '4px', border: '1px solid hsl(var(--color-border))' }}>
+                            <button onClick={() => setFilter('all')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'all' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: filter === 'all' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', transition: 'all 0.2s' }}>All</button>
+                            <button onClick={() => setFilter('active')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'active' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'active' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'active' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Active</button>
+                            <button onClick={() => setFilter('review')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'review' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'review' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'review' ? '#3B82F6' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>In Review</button>
+                            <button onClick={() => setFilter('done')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'done' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'done' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'done' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Done</button>
+                            <button onClick={() => setFilter('failed')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'failed' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'failed' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'failed' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Failed</button>
                         </div>
                     </div>
 
@@ -260,72 +309,21 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                         {filteredHistory && filteredHistory.length > 0 ? (
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 {/* Updated List Item per screenshot */}
-                                {filteredHistory.map(item => (
-                                    <div key={item.id} style={{
-                                        padding: '20px',
-                                        backgroundColor: 'hsl(var(--color-bg-card))',
-                                        borderRadius: '16px',
-                                        boxShadow: 'var(--shadow-sm)',
-                                        border: '1px solid hsl(var(--color-border))',
-                                        position: 'relative'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                            <div>
-                                                <div style={{
-                                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                                                    backgroundColor: item.status === 'success' ? '#F0FDF4' : '#FFF7ED',
-                                                    color: item.status === 'success' ? '#166534' : '#B45309',
-                                                    fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', marginBottom: '8px'
-                                                }}>
-                                                    {item.status === 'success' ? <Check size={12} /> : <Clock size={12} />} {item.status.toUpperCase()}
-                                                </div>
-                                                <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>{item.objective}</h3>
-                                                <p style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))', marginTop: '4px' }}>EARLY</p>
-                                            </div>
+                                {filteredHistory.map(item => {
+                                    const defaultCharity = CHARITIES.find(c => c.id === userProfile?.defaultCharity);
 
-                                            <div style={{
-                                                display: 'flex', alignItems: 'center', gap: '4px',
-                                                backgroundColor: 'hsl(var(--color-bg-input))', padding: '6px 10px', borderRadius: '8px',
-                                                fontWeight: 700, fontSize: '14px', color: 'hsl(var(--color-text-main))'
-                                            }}>
-                                                <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid orange' }} />
-                                                {item.stake}
-                                            </div>
-                                        </div>
-
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-                                            <Calendar size={14} color="#64748B" />
-                                            <span style={{ fontSize: '13px', color: '#64748B' }}>
-                                                {item.deadline ? `Due: ${new Date(item.deadline?.toDate ? item.deadline.toDate() : item.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'No Deadline'}
-                                            </span>
-                                        </div>
-
-                                        {item.status === 'pending' && (
-                                            <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
-                                                <button
-                                                    onClick={() => onUploadProof(item)}
-                                                    style={{
-                                                        flex: 1, backgroundColor: 'hsl(var(--color-text-main))', color: 'hsl(var(--color-bg-card))',
-                                                        padding: '12px', borderRadius: '8px', border: 'none',
-                                                        fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <Upload size={16} /> Upload Proof
-                                                </button>
-                                                <button
-                                                    onClick={() => setChatTask(item)}
-                                                    style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
-                                                    <MessageSquare size={20} color="white" />
-                                                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', backgroundColor: '#22C55E', borderRadius: '50%', border: '2px solid white' }} />
-                                                </button>
-                                                <button onClick={() => onDelete(item.id)} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                                    <Trash2 size={20} color="hsl(var(--color-text-secondary))" />
-                                                </button>
-                                            </div>
-                                        )}
-
-                                    </div>
-                                ))}
+                                    return (
+                                        <TaskCard
+                                            key={item.id}
+                                            task={{ ...item, charityName: defaultCharity?.name }}
+                                            onUploadProof={onUploadProof}
+                                            onDelete={onDelete}
+                                            onChat={setChatTask}
+                                            onExpire={onExpire}
+                                            onDonate={handleDonateClick}
+                                        />
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', backgroundColor: 'hsl(var(--color-bg-card))', padding: '40px', borderRadius: '16px', width: '100%', border: '1px solid hsl(var(--color-border))' }}>
@@ -344,6 +342,15 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                 <TaskChatAssistant
                     task={chatTask}
                     onClose={() => setChatTask(null)}
+                />
+            )}
+
+            {/* Charity Modal */}
+            {charityModalTask && (
+                <CharityModal
+                    task={charityModalTask}
+                    onClose={() => setCharityModalTask(null)}
+                    onDonate={handleDonate}
                 />
             )}
         </div>

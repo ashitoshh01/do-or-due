@@ -1,4 +1,5 @@
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import {
     collection,
     query,
@@ -8,91 +9,101 @@ import {
     doc,
     serverTimestamp,
     collectionGroup,
-    orderBy,
+    // orderBy, // Removing orderBy to avoid index requirement for now
     getDoc,
     increment,
     setDoc
 } from "firebase/firestore";
 
 // --- Admin Auth ---
+// --- Admin Auth ---
 export const adminLogin = async (email, password) => {
-    // This is hardcoded for the prototype as requested.
-    // In production, this would use Firebase Auth Custom Claims or a separate users collection.
-    if (email === 'official@doordue.com' && password === 'vvvvvvvv') {
-        // Create an admin session token (mock)
-        const token = 'admin-session-' + Date.now();
+    try {
+        // 1. Try to sign in normally
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await userCredential.user.getIdToken();
         localStorage.setItem('adminToken', token);
         return { success: true, token };
+    } catch (error) {
+        // 2. If user not found, CREATE it (Dev Helper)
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            try {
+                // Only create if it matches our specific hardcoded admin email to prevent abuse
+                if (email === 'official@doordue.com') {
+                    const newUser = await createUserWithEmailAndPassword(auth, email, password);
+                    const token = await newUser.user.getIdToken();
+                    localStorage.setItem('adminToken', token);
+                    return { success: true, token };
+                }
+            } catch (createError) {
+                throw createError;
+            }
+        }
+        throw error;
     }
-    throw new Error('Invalid admin credentials');
 };
 
 export const isAdminAuthenticated = () => {
     return !!localStorage.getItem('adminToken');
 };
 
-export const adminLogout = () => {
+export const adminLogout = async () => {
     localStorage.removeItem('adminToken');
+    await signOut(auth);
 };
 
 // --- Proof Verification ---
 
-// Fetch all pending proofs across all users
-export const fetchPendingProofs = async () => {
+// Fetch all tasks for Admin Board (Pending, Success, Failed)
+// Fetch all tasks for Admin Board (Pending, Success, Failed)
+// REFACTORED: Fetching by User then Tasks to avoid 'collectionGroup' permission/index issues
+export const fetchAllAdminTasks = async () => {
     try {
-        // Use collectionGroup query to find all tasks with status 'pending' (or a specific 'in_review' status if we add one)
-        // For now, let's assume tasks with a 'proofUrl' but status 'pending' need review.
-        // OR better yet, let's look for status 'pending' and proofUrl != null.
-        // Caveat: Firestore composite indexes required for compound queries.
-        // Simpler approach for prototype: Fetch recent tasks from collectionGroup 'tasks' order by createdAt.
-        // Filter client-side for now if dataset is small, or strictly query where status == 'pending_review' 
-        // (We might need to update the status when user uploads proof).
-
-        // Let's assume user upload sets status to 'pending_review' or we just look for 'proofUrl' existing.
-        // Update: The current user flow sets 'status' to 'success' immediately after local AI check.
-        // To implement ADMIN review, we must change that flow -> Local AI -> 'pending_review' -> Admin Board.
-
-        // FOR NOW: Let's fetch all tasks where valid proof exists.
-        // Creating a loose query for tasks. 
-
-        const tasksQuery = query(
-            collectionGroup(db, 'tasks'),
-            where('status', '==', 'pending_review'),
-            orderBy('createdAt', 'desc')
-        );
-
-        const snapshot = await getDocs(tasksQuery);
         const proofs = [];
 
-        // We need user details for each task too.
-        for (const docSnap of snapshot.docs) {
-            const taskData = docSnap.data();
-            const taskId = docSnap.id;
+        // 1. Fetch ALL Users
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
 
-            // Get user data
-            // taskData.userId MUST be present. If not, we can get it from ref.parent.parent.id
-            const userId = taskData.userId || docSnap.ref.parent.parent.id;
+        // 2. Iterate each user and fetch their tasks
+        const fetchPromises = usersSnapshot.docs.map(async (userDoc) => {
+            const userData = userDoc.data();
+            const userId = userDoc.id;
 
-            const userRef = doc(db, 'users', userId);
-            const userSnap = await getDoc(userRef);
-            const userData = userSnap.exists() ? userSnap.data() : { name: 'Unknown User', email: 'N/A' };
+            // Query this user's tasks
+            const tasksRef = collection(db, 'users', userId, 'tasks');
+            // We want specific statuses
+            const q = query(tasksRef, where('status', 'in', ['pending_review', 'success', 'failed']));
+            const tasksSnapshot = await getDocs(q);
 
-            proofs.push({
-                taskId,
-                userId,
-                ...taskData,
-                userName: userData.name || userData.email,
-                userEmail: userData.email
+            tasksSnapshot.forEach(taskDoc => {
+                const taskData = taskDoc.data();
+                proofs.push({
+                    taskId: taskDoc.id,
+                    userId,
+                    ...taskData,
+                    userName: userData.name || userData.email || 'Unknown User',
+                    userEmail: userData.email || 'N/A',
+                    createdAtTimestamp: taskData.createdAt?.toMillis ? taskData.createdAt.toMillis() : Date.now()
+                });
             });
-        }
+        });
+
+        await Promise.all(fetchPromises);
+
+        // 3. Sort client-side
+        proofs.sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp);
 
         return proofs;
 
     } catch (error) {
-        console.error("Error fetching pending proofs:", error);
+        console.error("Error fetching admin tasks:", error);
         throw error;
     }
 };
+
+// Kept for backward compatibility if needed, but aliasing to new one
+export const fetchPendingProofs = fetchAllAdminTasks;
 
 // Approve Proof
 export const approveProof = async (userId, taskId, stakeAmount) => {

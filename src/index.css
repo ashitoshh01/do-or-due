@@ -1115,3 +1115,80 @@ body {
 .react-datepicker__triangle {
   display: none;
 }
+
+/* Flip Clock Styles */
+.flip-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  width: 44px;
+  height: 50px;
+}
+
+.flip-card-top,
+.flip-card-bottom {
+  height: 50%;
+  width: 100%;
+  background-color: #3B82F6;
+  /* Blue-500 */
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.flip-card-top {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  align-items: flex-end;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Flip Clock Styles */
+.flip-card {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 50px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 50px;
+  color: hsl(var(--color-text-main));
+  text-align: center;
+  perspective: 400px;
+  overflow: hidden;
+}
+
+/* Animating Number - Simple "Roll Up" Effect */
+.flip-card-inner {
+  display: inline-block;
+  animation: rollUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rollUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dark Mode Overrides */
+.dark .flip-card {
+  background: hsl(var(--color-bg-card));
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid hsl(var(--color-border));
+}

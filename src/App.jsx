@@ -84,66 +84,46 @@ function MainApp() {
   const handleUploadClick = (task) => setVerificationTask(task);
   const handleCloseModal = () => setVerificationTask(null);
 
+  // Renamed logic: This handles the Manual Proof Upload
   const handleVerify = async (file) => {
     if (!verificationTask) return;
 
-    setVerificationTask(null);
+    // 1. Show local loading state if needed, or just process
     setIsUploading(true);
 
     try {
-      const result = await verifyProof(file, verificationTask.objective);
+      // 2. Convert File to Base64 (for Prototype) or Upload to Storage
+      // Ideally use Storage, but keeping the Base64 logic from before or switching to Storage if easier.
+      // Let's use Base64 for simplicity in prototype unless size is an issue.
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64data = reader.result;
 
-      setCurrentTask(verificationTask);
-      setIsUploading(false);
+        // 3. Update Firestore: Status -> 'pending_review'
+        await updateTaskStatus(currentUser.uid, verificationTask.id, 'pending_review', base64data);
 
-      if (result.verified) {
-        // AI Verified locally - For this prototype, we mark as 'success' immediately
-        // BUT we also want to support Admin Review. 
-        // If we want Admin to review EVERYTHING, we should set status to 'pending_review' here instead.
-        // However, user requested "Proof Checks" page for admin.
-        // Let's modify logic: Mark as 'pending_review' so it shows up in Admin Portal.
-        // Wait, the prompt says "Admin Portal – Proof Verification Page... This page will list all proofs submitted by users."
-        // And "On approval: Mark the task as completed."
-        // This implies the AI check is just a preliminary filter or purely client side, 
-        // OR the 'success' state currently bypasses admin.
+        // 4. Close Modal & Reset State
+        setVerificationTask(null);
+        setIsUploading(false);
+        setAppView('dashboard'); // Stay on dashboard (or ensure we are there)
 
-        // DECISION: To properly demonstrate Admin Portal, I will set status to 'pending_review' 
-        // so the Admin HAS to approve it for the user to get money.
-        // BUT to keep the user experience smooth for the demo (if admin is offline), 
-        // maybe we can double-write? 
-        // No, let's go with "pending_review".
+        // Optional: Show a small toast success
+        setPopup({
+          isOpen: true,
+          title: 'Proof Submitted',
+          message: 'Your proof has been sent to the Admin for review.',
+          type: 'success'
+        });
+      };
 
-        // Actually, for the sake of the 'TaskResult' screen showing "Success", 
-        // I will keep the local show as success but DB status as 'pending_review'.
-
-        // UPDATE: Changed dbService flow. I will manually update status here to 'pending_review' w/ proofUrl.
-        // We need to upload the image to storage (or simulate it). 
-        // For local prototype without storage, I'll use a data URL (not scalable but works for demo).
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = async () => {
-          const base64data = reader.result;
-
-          // Set to pending_review for Admin to pick up
-          await updateTaskStatus(currentUser.uid, verificationTask.id, 'pending_review', base64data);
-
-          // Show "Under Review" screen instead of instant success? 
-          // Or show Success screen with a note "Sent for verification".
-          setAppView('result_review');
-        };
-
-      } else {
-        setAppView('result_fail');
-        await failTask(currentUser.uid, verificationTask.id);
-      }
     } catch (err) {
       console.error(err);
       setIsUploading(false);
       setPopup({
         isOpen: true,
-        title: 'Verification Error',
-        message: err.message || 'Failed to verify proof. Please try again.',
+        title: 'Upload Failed',
+        message: 'Failed to submit proof. Please try again.',
         type: 'error'
       });
     }
@@ -167,6 +147,10 @@ function MainApp() {
         onClick: () => setPopup({ ...popup, isOpen: false })
       }
     });
+  };
+
+  const handleTaskExpire = async (taskId) => {
+    await failTask(currentUser.uid, taskId);
   };
 
   const handleAddFunds = () => {
@@ -255,6 +239,7 @@ function MainApp() {
           onCreate={handleCommit}
           onUploadProof={handleUploadClick}
           onDelete={handleDelete}
+          onExpire={handleTaskExpire}
           history={tasks}
           balance={userProfile.balance}
           onShowPopup={(config) => setPopup({ isOpen: true, ...config })}
@@ -284,7 +269,7 @@ function MainApp() {
             </div>
             <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--color-text-main))', marginBottom: '16px' }}>Under Review</h2>
             <p style={{ color: 'hsl(var(--color-text-secondary))', lineHeight: '1.6', marginBottom: '32px' }}>
-              Great job! Your proof has been verified by our AI and sent to an admin for final approval. Your rewards will be credited once approved.
+              Wait, AI is checking and it may take some time. We will notify you once approved.
             </p>
             <button
               onClick={() => setAppView('dashboard')}

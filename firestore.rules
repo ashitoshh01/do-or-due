@@ -2,25 +2,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // User Profiles
-    match /users/{userId} {
-      // Allow reading any user profile (needed for Leaderboard)
-      allow read: if request.auth != null;
-      
-      // Allow writing only if it's the user's own profile
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if the user is the specific admin
+    function isAdmin() {
+      return request.auth != null && (request.auth.token.email == 'admin@doordue.com' || request.auth.token.email == 'official@doordue.com');
+    }
 
-      // TASKS SUBCOLLECTION
-      // Allow read/write only if the task belongs to the user (nested under their ID)
+    // Allow users to access their own data
+    // Admin can access ALL data
+    // Leaderboard needs to read all users (simplified for prototype)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      
       match /tasks/{taskId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
     }
-    // TRANSACTIONS COLLECTION
-    // Allow creating a transaction (for manual payment logging) and reading (to check uniqueness)
-    match /transactions/{transactionId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null;
+
+    // Allow Admin to perform Collection Group queries on 'tasks'
+    match /{path=**}/tasks/{taskId} {
+      allow read, write: if isAdmin();
     }
   }
 }

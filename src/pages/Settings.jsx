@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut } from 'lucide-react';
+import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { updateUserProfile } from '../services/dbService';
 import AvatarWithEdit from '../components/AvatarWithEdit';
+import { CHARITIES } from '../constants/charities';
 
 const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     const { currentUser, logout, updateUserPassword, deleteUserAccount } = useAuth();
@@ -31,6 +32,17 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
         } catch (error) {
             console.error('Error updating avatar:', error);
             onShowPopup?.({ title: 'Error', message: 'Failed to update avatar', type: 'error' });
+        }
+    };
+
+    const handleDefaultCharityChange = async (charityId) => {
+        try {
+            await updateUserProfile(currentUser.uid, { defaultCharity: charityId });
+            if (onProfileUpdate) onProfileUpdate({ ...userProfile, defaultCharity: charityId });
+            onShowPopup?.({ title: 'Success', message: 'Default charity preference updated.', type: 'success' });
+        } catch (error) {
+            console.error('Error updating default charity:', error);
+            onShowPopup?.({ title: 'Error', message: 'Failed to update preference', type: 'error' });
         }
     };
 
@@ -220,6 +232,46 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                                 >
                                     <div className="toggle-handle"></div>
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Default Charity Section */}
+                    <div className="settings-card" style={{ marginTop: '24px' }}>
+                        <div className="card-header">
+                            <Heart size={20} className="card-icon" color="#EF4444" />
+                            <h3>Default Charity</h3>
+                        </div>
+                        <div className="card-body">
+                            <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))', marginBottom: '16px' }}>
+                                Select a charity to automatically donate your stake to when a task fails.
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <button
+                                    onClick={() => handleDefaultCharityChange(null)}
+                                    style={{
+                                        textAlign: 'left', padding: '10px', borderRadius: '8px',
+                                        border: `1px solid ${!userProfile.defaultCharity ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))'}`,
+                                        background: !userProfile.defaultCharity ? 'rgba(var(--color-primary), 0.05)' : 'hsl(var(--color-bg-input))',
+                                        cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: 'hsl(var(--color-text-main))'
+                                    }}
+                                >
+                                    No Default (Ask me every time)
+                                </button>
+                                {CHARITIES.map(charity => (
+                                    <button
+                                        key={charity.id}
+                                        onClick={() => handleDefaultCharityChange(charity.id)}
+                                        style={{
+                                            textAlign: 'left', padding: '10px', borderRadius: '8px',
+                                            border: `1px solid ${userProfile.defaultCharity === charity.id ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))'}`,
+                                            background: userProfile.defaultCharity === charity.id ? 'rgba(var(--color-primary), 0.05)' : 'hsl(var(--color-bg-input))',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'hsl(var(--color-text-main))' }}>{charity.name}</div>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
