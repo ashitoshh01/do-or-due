@@ -112,7 +112,7 @@ function MainApp() {
         setPopup({
           isOpen: true,
           title: 'Proof Submitted',
-          message: 'Your proof has been sent to the Admin for review.',
+          message: 'Your proof has been sent to the Ai model for review.',
           type: 'success'
         });
       };

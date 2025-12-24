@@ -170,7 +170,7 @@ const TaskCard = ({ task, onUploadProof, onDelete, onChat, onExpire, onDonate })
                     {isUnderReview && (
                         <div style={{ padding: '12px', background: '#EFF6FF', borderRadius: '10px', color: '#1E40AF', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                             <div className="spin" style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #93C5FD', borderTopColor: '#1E40AF' }}></div>
-                            Waiting for Admin Review...
+                            AI is checking...
                         </div>
                     )}
                 </div>

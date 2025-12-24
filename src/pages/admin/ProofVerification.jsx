@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAllAdminTasks, approveProof, rejectProof, adminLogout } from '../../services/adminService';
+import { subscribeToAdminTasks, approveProof, rejectProof, adminLogout } from '../../services/adminService';
 import { Check, X, LogOut, RefreshCw, ZoomIn, Clock, AlertTriangle, AlertCircle } from 'lucide-react';
 import Popup from '../../components/Popup';
 
@@ -12,23 +12,26 @@ const ProofVerification = ({ onLogout }) => {
     const [reason, setReason] = useState('');
     const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
 
-    // Load Proofs
-    const loadProofs = async () => {
-        setLoading(true);
-        try {
-            const data = await fetchAllAdminTasks();
-            setProofs(data);
-        } catch (error) {
-            console.error(error);
-            showPopup('Error', 'Failed to fetch proofs.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'failed'
 
+    // Load Proofs (REAL-TIME)
     useEffect(() => {
-        loadProofs();
+        setLoading(true);
+        // Subscribe
+        const unsubscribe = subscribeToAdminTasks((data) => {
+            setProofs(data);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
+
+    // Manual Refresh (Optional now, but good for retrying connection)
+    const loadProofs = () => {
+        // Just re-triggering init if needed, but subscription handles it.
+        // We can keep it or remove it. Let's keep a no-op or simple log for now if the button exists.
+        console.log("Refreshing subscription...");
+    };
 
     const showPopup = (title, message, type = 'info') => {
         setPopup({ isOpen: true, title, message, type });
@@ -124,10 +127,10 @@ const ProofVerification = ({ onLogout }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '24px', height: '24px', background: '#F0F9FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0EA5E9', fontWeight: 700, fontSize: '10px' }}>
-                            {proof.userName.charAt(0).toUpperCase()}
+                            {(proof.userName || '?').charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>
-                            {proof.userName}
+                            {proof.userName || 'Unknown User'}
                         </span>
                     </div>
                     <span style={{ fontWeight: 800, color: '#D97706', fontSize: '14px', background: '#FFF7ED', padding: '4px 10px', borderRadius: '12px' }}>
@@ -229,12 +232,37 @@ const ProofVerification = ({ onLogout }) => {
                 </div>
             </header>
 
+            {/* Mobile Tabs */}
+            <div className="mobile-tabs">
+                <button
+                    className={`tab-btn ${activeTab === 'pending' ? 'active pending' : ''}`}
+                    onClick={() => setActiveTab('pending')}
+                >
+                    Pending ({pendingProofs.length})
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'approved' ? 'active approved' : ''}`}
+                    onClick={() => setActiveTab('approved')}
+                >
+                    Approved
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'failed' ? 'active failed' : ''}`}
+                    onClick={() => setActiveTab('failed')}
+                >
+                    Failed / Rejected
+                </button>
+            </div>
+
             {/* Main Content: 3 Columns */}
             <main style={{ maxWidth: '1600px', margin: '0 auto', padding: '32px', height: 'calc(100vh - 72px)', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(360px, 1.2fr) minmax(300px, 1fr)', gap: '32px', height: '100%' }}>
+                <div
+                    className={`show-${activeTab}`}
+                    style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(360px, 1.2fr) minmax(300px, 1fr)', gap: '32px', height: '100%' }}
+                >
 
                     {/* Column 1: NOT DONE (Failed) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="col-failed" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', padding: '12px', background: '#FFF1F2', borderRadius: '12px', border: '1px solid #FECDD3' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <AlertCircle size={18} color="#E11D48" />
@@ -251,7 +279,7 @@ const ProofVerification = ({ onLogout }) => {
                     </div>
 
                     {/* Column 2: MOST IMP (Pending) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fffff', borderRadius: '24px', position: 'relative' }}>
+                    <div className="col-pending" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fffff', borderRadius: '24px', position: 'relative' }}>
                         {/* Highlight Element */}
                         <div style={{ position: 'absolute', top: -10, left: 20, right: 20, height: '10px', background: '#3B82F6', filter: 'blur(20px)', opacity: 0.2, borderRadius: '50%' }}></div>
 
@@ -281,7 +309,7 @@ const ProofVerification = ({ onLogout }) => {
                     </div>
 
                     {/* Column 3: DONE (Success) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="col-done" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', padding: '12px', background: '#F0FDF4', borderRadius: '12px', border: '1px solid #BBF7D0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Check size={18} color="#16A34A" />
@@ -430,6 +458,105 @@ const ProofVerification = ({ onLogout }) => {
                 .scroll-container::-webkit-scrollbar-track { background: transparent; }
                 .scroll-container::-webkit-scrollbar-thumb { background: #CBD5E1; borderRadius: 10px; }
                 .admin-card:hover .card-img { transform: scale(1.05); }
+
+                /* TABS (For Mobile) */
+                .mobile-tabs {
+                    display: none;
+                    background: white;
+                    padding: 8px 16px;
+                    border-bottom: 1px solid #E2E8F0;
+                    margin-bottom: 16px;
+                    gap: 12px;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+                
+                .tab-btn {
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    white-space: nowrap;
+                    border: 1px solid transparent;
+                    background: #F1F5F9;
+                    color: #64748B;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                }
+
+                .tab-btn.active.pending { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+                .tab-btn.active.approved { background: #DCFCE7; color: #16A34A; border-color: #BBF7D0; }
+                .tab-btn.active.failed { background: #FFE4E6; color: #E11D48; border-color: #FECDD3; }
+
+                /* HIDE/SHOW LOGIC */
+                @media (max-width: 1024px) {
+                    main {
+                        padding: 16px !important;
+                        height: auto !important; /* Allow scroll on mobile */
+                        overflow: visible !important;
+                    }
+
+                    .mobile-tabs {
+                        display: flex !important;
+                        position: sticky;
+                        top: 0;
+                        z-index: 40;
+                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                    }
+
+                    /* Grid Switch to Single Column */
+                    div[style*="display: grid"] {
+                        display: block !important;
+                    }
+
+                    /* Hide columns based on active tab */
+                    .col-pending, .col-done, .col-failed {
+                        display: none !important;
+                    }
+                    
+                    .show-pending .col-pending { display: flex !important; }
+                    .show-approved .col-done { display: flex !important; }
+                    .show-failed .col-failed { display: flex !important; }
+
+                    /* Reset heights for mobile scroll */
+                    .col-pending, .col-done, .col-failed {
+                        height: auto !important;
+                        min-height: 50vh;
+                    }
+                    /* Remove internal scrollbars mainly */
+                    .scroll-container {
+                        overflow: visible !important;
+                    }
+
+                    /* Header Stacking (from previous step, refined) */
+                    header {
+                        padding: 12px 16px !important;
+                        height: auto !important;
+                        min-height: 72px;
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+                    header > div {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                    header > div:last-child {
+                        flex-direction: column;
+                        gap: 12px;
+                        align-items: flex-start;
+                    }
+                    header > div:last-child > div:first-child {
+                        margin-right: 0 !important;
+                        padding-right: 0 !important;
+                        border-right: none !important;
+                        padding-bottom: 12px;
+                        border-bottom: 1px solid #E2E8F0;
+                        width: 100%;
+                        display: flex;
+                        justify-content: space-between;
+                        text-align: left !important;
+                    }
+                }
             `}</style>
         </div>
     );

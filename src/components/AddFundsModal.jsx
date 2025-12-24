@@ -103,41 +103,73 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                 ) : (
                     // STEP 2: SCAN & ENTER UTR
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', display: 'inline-block', marginBottom: '20px', border: '1px solid #E2E8F0' }}>
-                            <QRCode value={upiLink} size={160} />
+                        <div style={{
+                            background: 'white', padding: '20px', borderRadius: '16px',
+                            display: 'inline-block', marginBottom: '24px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                            border: '1px solid #E2E8F0'
+                        }}>
+                            <QRCode value={upiLink} size={180} />
+                            <div style={{ marginTop: '12px', fontSize: '10px', color: '#64748B', fontWeight: 600, letterSpacing: '0.5px' }}>
+                                SCAN WITH ANY UPI APP
+                            </div>
                         </div>
 
-                        <div style={{ marginBottom: '20px', fontSize: '13px', color: 'hsl(var(--color-text-secondary))', background: 'hsl(var(--color-bg-input))', padding: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span>{upiId}</span>
-                            <button onClick={() => navigator.clipboard.writeText(upiId)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
-                                <Copy size={14} color="hsl(var(--color-primary))" />
-                            </button>
+                        <div style={{ marginBottom: '24px', background: 'hsl(var(--color-bg-input))', padding: '12px', borderRadius: '12px', border: '1px solid hsl(var(--color-border))' }}>
+                            <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--color-text-secondary))', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.5px' }}>
+                                UPI ID
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <span style={{ fontFamily: 'monospace', fontSize: '15px', fontWeight: 600, color: 'hsl(var(--color-text-main))' }}>
+                                    {upiId}
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(upiId);
+                                        // Visual feedback could be added here if we had a toast system, for now the icon click is enough
+                                    }}
+                                    style={{
+                                        border: 'none', background: 'hsl(var(--color-primary))', color: 'white',
+                                        padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex'
+                                    }}
+                                    title="Copy UPI ID"
+                                >
+                                    <Copy size={14} />
+                                </button>
+                            </div>
                         </div>
 
-                        <div style={{ textAlign: 'left', marginBottom: '20px' }}>
-                            <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Enter UPI Reference ID (UTR)</label>
+                        <div style={{ textAlign: 'left', marginBottom: '24px' }}>
+                            <label style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', display: 'block', color: 'hsl(var(--color-text-main))' }}>
+                                Enter Payment Reference ID (UTR)
+                            </label>
                             <input
                                 type="text"
-                                placeholder="e.g. 308912345678"
+                                placeholder="e.g. 3089xxxxxxxx"
                                 maxLength={12}
                                 value={utr}
                                 onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))} // Only numbers
                                 disabled={isVerifying}
                                 className="input-field"
-                                style={{ width: '100%', padding: '12px', fontSize: '15px', opacity: isVerifying ? 0.5 : 1 }}
+                                style={{
+                                    width: '100%', padding: '14px', fontSize: '16px', letterSpacing: '1px',
+                                    textAlign: 'center', fontWeight: 600,
+                                    opacity: isVerifying ? 0.5 : 1
+                                }}
                             />
-                            <div style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginTop: '4px' }}>
-                                Must be 12 digits from your payment app.
+                            <div style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginTop: '6px', lineHeight: '1.4' }}>
+                                Check your GPay/PhonePe history for the 12-digit <strong>UTR</strong> or <strong>UPI Ref ID</strong>.
                             </div>
                         </div>
 
                         <button
                             className="btn btn-primary"
                             style={{
-                                width: '100%', padding: '14px',
+                                width: '100%', padding: '16px', borderRadius: '12px',
                                 opacity: utr.length === 12 && !isVerifying ? 1 : 0.6,
-                                cursor: isVerifying ? 'wait' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                                cursor: utr.length === 12 && !isVerifying ? 'pointer' : 'not-allowed',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                fontSize: '15px', marginTop: '8px'
                             }}
                             disabled={utr.length !== 12 || isVerifying}
                             onClick={handleVerifyAndProceed}
@@ -145,23 +177,20 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                             {isVerifying ? (
                                 <>
                                     <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-                                    Verifying...
+                                    Verifying Payment...
                                 </>
                             ) : (
-                                `Verify & Add ₹${amount}`
+                                <>
+                                    <CheckCircle size={18} />
+                                    Verify & Add ₹{amount}
+                                </>
                             )}
                         </button>
 
                         {!isVerifying && (
-                            <button onClick={() => setStep(1)} style={{ marginTop: '12px', background: 'none', border: 'none', color: 'hsl(var(--color-text-secondary))', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
-                                Change Amount
+                            <button onClick={() => setStep(1)} style={{ marginTop: '16px', background: 'none', border: 'none', color: 'hsl(var(--color-text-secondary))', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
+                                ← Change Amount
                             </button>
-                        )}
-
-                        {isVerifying && (
-                            <div style={{ marginTop: '12px', fontSize: '12px', color: 'hsl(var(--color-text-secondary))' }}>
-                                Please do not close this window...
-                            </div>
                         )}
                     </div>
                 )}

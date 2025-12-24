@@ -23,5 +23,11 @@ service cloud.firestore {
     match /{path=**}/tasks/{taskId} {
       allow read, write: if isAdmin();
     }
+
+    // Allow users to record payments
+    match /transactions/{txnId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
   }
 }

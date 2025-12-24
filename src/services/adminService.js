@@ -12,7 +12,8 @@ import {
     // orderBy, // Removing orderBy to avoid index requirement for now
     getDoc,
     increment,
-    setDoc
+    setDoc,
+    onSnapshot
 } from "firebase/firestore";
 
 // --- Admin Auth ---
@@ -26,7 +27,7 @@ export const adminLogin = async (email, password) => {
         return { success: true, token };
     } catch (error) {
         // 2. If user not found, CREATE it (Dev Helper)
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        if (error.code === 'auth/user-not-found') {
             try {
                 // Only create if it matches our specific hardcoded admin email to prevent abuse
                 if (email === 'official@doordue.com') {
@@ -55,55 +56,81 @@ export const adminLogout = async () => {
 // --- Proof Verification ---
 
 // Fetch all tasks for Admin Board (Pending, Success, Failed)
-// Fetch all tasks for Admin Board (Pending, Success, Failed)
 // REFACTORED: Fetching by User then Tasks to avoid 'collectionGroup' permission/index issues
-export const fetchAllAdminTasks = async () => {
-    try {
-        const proofs = [];
+// Real-time subscription for Admin Board
 
-        // 1. Fetch ALL Users
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersRef);
+export const subscribeToAdminTasks = (callback) => {
+    let unsubscribeSnapshot = null;
 
-        // 2. Iterate each user and fetch their tasks
-        const fetchPromises = usersSnapshot.docs.map(async (userDoc) => {
-            const userData = userDoc.data();
-            const userId = userDoc.id;
+    // Wait for Auth to be ready
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+        if (user) {
+            try {
+                // Query ALL 'tasks' collections where status is relevant
+                const q = query(
+                    collectionGroup(db, 'tasks'),
+                    where('status', 'in', ['pending_review', 'success', 'failed'])
+                );
 
-            // Query this user's tasks
-            const tasksRef = collection(db, 'users', userId, 'tasks');
-            // We want specific statuses
-            const q = query(tasksRef, where('status', 'in', ['pending_review', 'success', 'failed']));
-            const tasksSnapshot = await getDocs(q);
+                unsubscribeSnapshot = onSnapshot(q, async (snapshot) => {
+                    const tempProofs = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            taskId: doc.id,
+                            userId: doc.ref.parent.parent ? doc.ref.parent.parent.id : 'unknown', // Handle orphan tasks
+                            ...data,
+                            createdAtTimestamp: data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()
+                        };
+                    });
 
-            tasksSnapshot.forEach(taskDoc => {
-                const taskData = taskDoc.data();
-                proofs.push({
-                    taskId: taskDoc.id,
-                    userId,
-                    ...taskData,
-                    userName: userData.name || userData.email || 'Unknown User',
-                    userEmail: userData.email || 'N/A',
-                    createdAtTimestamp: taskData.createdAt?.toMillis ? taskData.createdAt.toMillis() : Date.now()
+                    // Fetch user names for unique userIds
+                    const uniqueUserIds = [...new Set(tempProofs.map(p => p.userId).filter(id => id !== 'unknown'))];
+
+                    try {
+                        const userCache = {};
+                        await Promise.all(uniqueUserIds.map(async (uid) => {
+                            const userDoc = await getDoc(doc(db, 'users', uid));
+                            if (userDoc.exists()) {
+                                userCache[uid] = userDoc.data().name || userDoc.data().email || 'Unknown';
+                            }
+                        }));
+
+                        // Merge names
+                        const populatedProofs = tempProofs.map(proof => ({
+                            ...proof,
+                            userName: userCache[proof.userId] || proof.userName || 'Unknown User'
+                        }));
+
+                        // Client-side sort
+                        populatedProofs.sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp);
+                        callback(populatedProofs);
+                    } catch (err) {
+                        console.error("Error fetching user details:", err);
+                        tempProofs.sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp);
+                        callback(tempProofs);
+                    }
+
+                }, (error) => {
+                    console.error("Errors in snapshot:", error);
                 });
-            });
-        });
+            } catch (error) {
+                console.error("Error creating query:", error);
+            }
+        } else {
+            // User logged out
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            callback([]);
+        }
+    });
 
-        await Promise.all(fetchPromises);
-
-        // 3. Sort client-side
-        proofs.sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp);
-
-        return proofs;
-
-    } catch (error) {
-        console.error("Error fetching admin tasks:", error);
-        throw error;
-    }
+    // Return a function to cleanup BOTH listeners
+    return () => {
+        unsubscribeAuth();
+        if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
 };
 
-// Kept for backward compatibility if needed, but aliasing to new one
-export const fetchPendingProofs = fetchAllAdminTasks;
+// (Legacy export removed)
 
 // Approve Proof
 export const approveProof = async (userId, taskId, stakeAmount) => {
