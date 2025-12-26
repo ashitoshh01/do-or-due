@@ -269,7 +269,7 @@ function MainApp() {
             </div>
             <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--color-text-main))', marginBottom: '16px' }}>Under Review</h2>
             <p style={{ color: 'hsl(var(--color-text-secondary))', lineHeight: '1.6', marginBottom: '32px' }}>
-              Wait, AI is checking and it may take some time. We will notify you once approved.
+              AI is verifying your proof. Due to high traffic, this may take some time. You’ll be notified once it’s ready.
             </p>
             <button
               onClick={() => setAppView('dashboard')}

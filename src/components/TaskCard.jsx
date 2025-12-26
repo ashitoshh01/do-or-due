@@ -135,43 +135,102 @@ const TaskCard = ({ task, onUploadProof, onDelete, onChat, onExpire, onDonate })
                     )}
 
                     {isPending && !isUnderReview && (
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <>
+                            {/* Rejection Message Alert */}
+                            {task.rejectionReason && (
+                                <div style={{
+                                    marginBottom: '16px',
+                                    padding: '16px',
+                                    background: 'rgba(239, 68, 68, 0.05)',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                        <AlertCircle size={20} color="#EF4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                        <div>
+                                            <p style={{ color: '#EF4444', fontWeight: 700, fontSize: '14px', marginBottom: '6px' }}>
+                                                Proof Rejected
+                                            </p>
+                                            <p style={{ color: '#991B1B', fontSize: '13px', lineHeight: '1.5', marginBottom: '8px' }}>
+                                                Your proof lacks: <strong>"{task.rejectionReason}"</strong>
+                                            </p>
+                                            <p style={{ color: '#DC2626', fontSize: '12px', fontWeight: 600 }}>
+                                                Please try again with a better proof!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => onUploadProof(task)}
+                                    style={{
+                                        flex: 1, backgroundColor: 'hsl(var(--color-text-main))', color: 'hsl(var(--color-bg-card))',
+                                        padding: '12px', borderRadius: '10px', border: 'none',
+                                        fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                >
+                                    <Upload size={18} /> Upload Proof
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => onChat(task)}
+                                    style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.4)' }}>
+                                    <MessageSquare size={20} color="white" />
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => onDelete(task.id)}
+                                    style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'hsl(var(--color-bg-input))', border: '1px solid hsl(var(--color-border))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <Trash2 size={20} color="hsl(var(--color-text-secondary))" />
+                                </motion.button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Pending Review State */}
+                    {isUnderReview && (
+                        <>
+                            <div style={{ padding: '14px', background: '#EFF6FF', borderRadius: '10px', color: '#1E40AF', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                                <div className="spin" style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #93C5FD', borderTopColor: '#1E40AF', flexShrink: 0, marginTop: '2px' }}></div>
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ fontWeight: 700, marginBottom: '4px' }}>AI is verifying your proof</p>
+                                    <p style={{ fontSize: '11px', color: '#3B82F6', fontWeight: 500 }}>
+                                        Due to high traffic, this may take some time. You'll be notified once it's ready.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Replace Proof Button */}
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onUploadProof(task)}
                                 style={{
-                                    flex: 1, backgroundColor: 'hsl(var(--color-text-main))', color: 'hsl(var(--color-bg-card))',
-                                    padding: '12px', borderRadius: '10px', border: 'none',
-                                    fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer',
-                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                    width: '100%',
+                                    backgroundColor: 'hsl(var(--color-bg-input))',
+                                    color: 'hsl(var(--color-text-main))',
+                                    padding: '12px',
+                                    borderRadius: '10px',
+                                    border: '1px solid hsl(var(--color-border))',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
                                 }}
                             >
-                                <Upload size={18} /> Upload Proof
+                                <Upload size={16} /> Replace Proof
                             </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => onChat(task)}
-                                style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.4)' }}>
-                                <MessageSquare size={20} color="white" />
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => onDelete(task.id)}
-                                style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'hsl(var(--color-bg-input))', border: '1px solid hsl(var(--color-border))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                <Trash2 size={20} color="hsl(var(--color-text-secondary))" />
-                            </motion.button>
-                        </div>
-                    )}
-
-                    {/* Pending Review State */}
-                    {isUnderReview && (
-                        <div style={{ padding: '12px', background: '#EFF6FF', borderRadius: '10px', color: '#1E40AF', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            <div className="spin" style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #93C5FD', borderTopColor: '#1E40AF' }}></div>
-                            AI is checking...
-                        </div>
+                        </>
                     )}
                 </div>
             </motion.div>

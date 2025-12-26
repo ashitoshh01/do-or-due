@@ -19,6 +19,11 @@ import {
 // --- Admin Auth ---
 // --- Admin Auth ---
 export const adminLogin = async (email, password) => {
+    // 0. STRICT SECURITY CHECK
+    if (email !== 'official@doordue.com') {
+        throw new Error("Unauthorized Access: This portal is restricted.");
+    }
+
     try {
         // 1. Try to sign in normally
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -26,17 +31,25 @@ export const adminLogin = async (email, password) => {
         localStorage.setItem('adminToken', token);
         return { success: true, token };
     } catch (error) {
-        // 2. If user not found, CREATE it (Dev Helper)
-        if (error.code === 'auth/user-not-found') {
+        // 2. If user not found, CREATE it (Dev Helper for first-time setup)
+        // Check for both 'user-not-found' (legacy) and 'invalid-credential' (newer) depending on config
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             try {
-                // Only create if it matches our specific hardcoded admin email to prevent abuse
+                // Double check email just in case
                 if (email === 'official@doordue.com') {
+                    // Attempt creation - this might fail if password is weak (Firebase requires 6 chars)
+                    // The requested password 'vvvvvvvv' is 8 chars, so it is fine.
                     const newUser = await createUserWithEmailAndPassword(auth, email, password);
                     const token = await newUser.user.getIdToken();
                     localStorage.setItem('adminToken', token);
                     return { success: true, token };
                 }
             } catch (createError) {
+                // If creation fails (e.g. user DOES exist but password was wrong and we got invalid-credential above),
+                // we should re-throw the original login error or a generic one.
+                if (createError.code === 'auth/email-already-in-use') {
+                    throw new Error("Invalid password.");
+                }
                 throw createError;
             }
         }
@@ -184,21 +197,20 @@ export const rejectProof = async (userId, taskId, reason) => {
     try {
         const taskRef = doc(db, 'users', userId, 'tasks', taskId);
 
+        // Fetch task to check deadline? User asked "untill deadline is over".
+        // For now, just set it back to pending so they can retry.
+        // We set status to 'pending' (Active) and remove the current proof so they can upload again.
+        // We keep 'rejectionReason' to display it.
+
         await updateDoc(taskRef, {
-            status: 'failed',
+            status: 'pending', // Revert to active state
+            proofUrl: null,    // Clear the rejected proof
             rejectionReason: reason,
             reviewedAt: serverTimestamp(),
             reviewedBy: 'admin'
         });
 
-        // Reset streak? Or just mark failed?
-        // Previous logic for 'failTask':
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            streak: 0,
-            "stats.failed": increment(1)
-        });
-
+        // Previous failed stats logic removed because it's not a failure yet.
         return { success: true };
 
     } catch (error) {
