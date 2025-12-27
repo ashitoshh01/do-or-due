@@ -121,10 +121,7 @@ const AdminDashboardHome = ({ stats, onNavigate }) => {
                         <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 600, color: textColor }}>Very High</div>
                     </div>
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Pending Queue Load</span>
-                            <span style={{ fontSize: '10px', opacity: 0.7 }}>Low</span>
-                        </div>
+                        <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Pending Queue Load</div>
                         <div style={{ height: '8px', background: isDark ? '#334155' : '#F1F5F9', borderRadius: '4px', overflow: 'hidden' }}>
                             <div style={{ width: `${Math.min(stats.pending * 5, 100)}%`, height: '100%', background: stats.pending > 10 ? '#EF4444' : '#22C55E', borderRadius: '4px', transition: 'width 0.5s' }}></div>
                         </div>

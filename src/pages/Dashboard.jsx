@@ -106,6 +106,9 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
         return true;
     });
 
+    const [showAllTasks, setShowAllTasks] = useState(false);
+    const displayedTasks = showAllTasks ? filteredHistory : filteredHistory.slice(0, 5);
+
     const handleDonateClick = (task) => {
         if (userProfile?.defaultCharity) {
             // Auto-donate
@@ -305,11 +308,12 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                         </div>
                     </div>
 
+
                     <div className="card" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', padding: '24px', background: 'transparent', boxShadow: 'none', border: 'none' }}>
-                        {filteredHistory && filteredHistory.length > 0 ? (
+                        {displayedTasks && displayedTasks.length > 0 ? (
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 {/* Updated List Item per screenshot */}
-                                {filteredHistory.map(item => {
+                                {displayedTasks.map(item => {
                                     const defaultCharity = CHARITIES.find(c => c.id === userProfile?.defaultCharity);
 
                                     return (
@@ -324,6 +328,34 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                                         />
                                     );
                                 })}
+
+                                {filteredHistory.length > 5 && (
+                                    <button
+                                        onClick={() => setShowAllTasks(!showAllTasks)}
+                                        style={{
+                                            margin: '16px auto 0',
+                                            padding: '10px 20px',
+                                            background: 'hsl(var(--color-bg-subtle))',
+                                            border: '1px solid hsl(var(--color-border))',
+                                            borderRadius: '20px',
+                                            color: 'hsl(var(--color-text-secondary))',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        className="hover-scale"
+                                    >
+                                        {showAllTasks ? (
+                                            <>Show Less <ChevronRight size={14} style={{ transform: 'rotate(-90deg)' }} /></>
+                                        ) : (
+                                            <>Show More <ChevronRight size={14} style={{ transform: 'rotate(90deg)' }} /></>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', backgroundColor: 'hsl(var(--color-bg-card))', padding: '40px', borderRadius: '16px', width: '100%', border: '1px solid hsl(var(--color-border))' }}>
@@ -336,6 +368,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                     </div>
                 </div>
             </div>
+
 
             {/* Task Chat Assistant Modal */}
             {chatTask && (

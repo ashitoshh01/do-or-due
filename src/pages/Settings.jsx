@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut, Heart } from 'lucide-react';
+import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut, Heart, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { updateUserProfile } from '../services/dbService';
@@ -123,77 +123,100 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
         });
     };
 
-    return (
-        <div className="settings-container animate-in">
-            <div className="settings-header">
-                <div>
-                    <h1 className="page-title">Settings</h1>
-                    <p className="page-subtitle">Manage your account and preferences</p>
-                </div>
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleLogout}
-                    style={{ color: 'hsl(var(--color-accent-red))', borderColor: 'rgba(var(--color-accent-red), 0.2)' }}
-                >
-                    <LogOut size={16} />
-                    Log Out
-                </button>
-            </div>
+    const [activeTab, setActiveTab] = useState('profile');
+    const [mobileShowContent, setMobileShowContent] = useState(false);
 
-            <div className="settings-grid">
-                {/* Visual Profile Card */}
-                <div className="settings-card profile-card">
-                    <div className="profile-cover"></div>
-                    <div className="profile-content">
-                        <div className="profile-avatar-wrapper">
-                            <AvatarWithEdit
-                                currentAvatar={selectedAvatar}
-                                onAvatarChange={handleAvatarChange}
-                                size={100}
-                                editable={true}
-                            />
-                        </div>
-                        <div className="profile-fields">
-                            <div className="form-group">
-                                <label>Display Name</label>
-                                <div className="input-wrapper">
-                                    <User size={16} />
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Enter your name"
-                                    />
-                                </div>
+    // Animation variants
+    const contentVariants = {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } },
+        exit: { opacity: 0, x: -20, transition: { duration: 0.2 } }
+    };
+
+    const handleTabClick = (id) => {
+        setActiveTab(id);
+        setMobileShowContent(true);
+    };
+
+    const handleBackToMenu = () => {
+        setMobileShowContent(false);
+    };
+
+    const renderContent = () => {
+        // Content wrapper with back button for mobile
+        const ContentWrapper = ({ children, title }) => (
+            <div className="content-wrapper">
+                <div className="mobile-header">
+                    <button onClick={handleBackToMenu} className="back-btn">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <h2>{title}</h2>
+                </div>
+                {children}
+            </div>
+        );
+
+        let content = null;
+        let title = '';
+
+        switch (activeTab) {
+            case 'profile':
+                title = 'Profile';
+                content = (
+                    <div className="settings-card profile-card">
+                        <div className="profile-cover"></div>
+                        <div className="profile-content">
+                            <div className="profile-avatar-wrapper">
+                                <AvatarWithEdit
+                                    currentAvatar={selectedAvatar}
+                                    onAvatarChange={handleAvatarChange}
+                                    size={100}
+                                    editable={true}
+                                />
                             </div>
-                            <div className="form-group">
-                                <label>Email Address</label>
-                                <div className="input-wrapper disabled">
-                                    <Mail size={16} />
-                                    <input
-                                        type="email"
-                                        value={currentUser?.email || ''}
-                                        disabled
-                                    />
+                            <div className="profile-fields">
+                                <div className="form-group">
+                                    <label>Display Name</label>
+                                    <div className="input-wrapper">
+                                        <User size={16} />
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Enter your name"
+                                        />
+                                    </div>
                                 </div>
+                                <div className="form-group">
+                                    <label>Email Address</label>
+                                    <div className="input-wrapper disabled">
+                                        <Mail size={16} />
+                                        <input
+                                            type="email"
+                                            value={currentUser?.email || ''}
+                                            disabled
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    className="btn btn-primary save-btn"
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                >
+                                    {saving ? <><div className="spinner-sm"></div> Saving...</> : <><Save size={16} /> Save Changes</>}
+                                </button>
                             </div>
-                            <button
-                                className="btn btn-primary save-btn"
-                                onClick={handleSave}
-                                disabled={saving}
-                            >
-                                {saving ? <><div className="spinner-sm"></div> Saving...</> : <><Save size={16} /> Save Changes</>}
-                            </button>
                         </div>
                     </div>
-                </div>
-
-                {/* Preferences Section */}
-                <div className="settings-column">
+                );
+                break;
+            case 'preferences':
+                title = 'Preferences';
+                content = (
                     <div className="settings-card">
                         <div className="card-header">
                             <Bell size={20} className="card-icon" />
-                            <h3>Preferences</h3>
+                            <h3>{title}</h3>
                         </div>
                         <div className="card-body">
                             <div className="setting-row">
@@ -235,12 +258,15 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Default Charity Section */}
-                    <div className="settings-card" style={{ marginTop: '24px' }}>
+                );
+                break;
+            case 'charity':
+                title = 'Default Charity';
+                content = (
+                    <div className="settings-card">
                         <div className="card-header">
                             <Heart size={20} className="card-icon" color="#EF4444" />
-                            <h3>Default Charity</h3>
+                            <h3>{title}</h3>
                         </div>
                         <div className="card-body">
                             <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))', marginBottom: '16px' }}>
@@ -275,12 +301,15 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Security & Danger Zone */}
+                );
+                break;
+            case 'security':
+                title = 'Security';
+                content = (
                     <div className="settings-card">
                         <div className="card-header">
                             <Shield size={20} className="card-icon" />
-                            <h3>Security</h3>
+                            <h3>{title}</h3>
                         </div>
                         <div className="card-body">
                             <button
@@ -336,8 +365,146 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                             </div>
                         </div>
                     </div>
+                );
+                break;
+            default:
+                content = null;
+        }
+
+        return (
+            <ContentWrapper title={title}>
+                <div key={activeTab} className="animate-in">
+                    {content}
+                </div>
+            </ContentWrapper>
+        );
+    };
+
+    const TabButton = ({ id, icon: Icon, label }) => (
+        <button
+            onClick={() => handleTabClick(id)}
+            style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                width: '100%', padding: '12px 16px',
+                background: activeTab === id
+                    ? (isDark ? 'rgba(255,255,255,0.1)' : 'hsl(var(--color-bg-card))') // Dark mode visibility fix
+                    : 'transparent',
+                border: 'none', borderRadius: '12px',
+                color: activeTab === id
+                    ? (isDark ? '#F8FAFC' : 'hsl(var(--color-primary))') // Dark mode text visibility fix
+                    : 'hsl(var(--color-text-secondary))',
+                fontWeight: activeTab === id ? 700 : 500,
+                cursor: 'pointer', transition: 'all 0.2s',
+                marginBottom: '4px',
+                boxShadow: activeTab === id ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+            }}
+        >
+            <Icon size={18} />
+            {label}
+        </button>
+    );
+
+    return (
+        <div className="settings-container">
+            {/* Header - Only visible on Desktop or when in Menu view on Mobile */}
+            <div className={`settings-header ${mobileShowContent ? 'mobile-hidden' : ''}`}>
+                <div>
+                    <h1 className="page-title">Settings</h1>
+                    <p className="page-subtitle">Manage your account and preferences</p>
+                </div>
+                <button
+                    className="btn btn-secondary"
+                    onClick={handleLogout}
+                    style={{ color: 'hsl(var(--color-accent-red))', borderColor: 'rgba(var(--color-accent-red), 0.2)' }}
+                >
+                    <LogOut size={16} />
+                    Log Out
+                </button>
+            </div>
+
+            <div className="settings-layout">
+                {/* Sidebar Navigation */}
+                <div className={`settings-sidebar ${mobileShowContent ? 'mobile-hidden' : ''}`}>
+                    <div className="sidebar-menu">
+                        <TabButton id="profile" icon={User} label="Profile" />
+                        <TabButton id="preferences" icon={Bell} label="Preferences" />
+                        <TabButton id="charity" icon={Heart} label="Charity" />
+                        <TabButton id="security" icon={Shield} label="Security" />
+                    </div>
+                </div>
+
+                {/* Content Area */}
+                <div className={`settings-content ${!mobileShowContent ? 'mobile-hidden' : 'mobile-visible'}`}>
+                    {renderContent()}
                 </div>
             </div>
+
+            <style>{`
+                .settings-layout {
+                    display: grid;
+                    grid-template-columns: 240px 1fr;
+                    gap: 32px;
+                    margin-top: 24px;
+                }
+                .sidebar-menu {
+                    background: hsl(var(--color-bg-subtle));
+                    padding: 16px;
+                    border-radius: 16px;
+                }
+                .mobile-header {
+                    display: none;
+                    align-items: center;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+                .mobile-header h2 {
+                    font-size: 20px;
+                    font-weight: 700;
+                    margin: 0;
+                    color: hsl(var(--color-text-main));
+                }
+                .back-btn {
+                    background: hsl(var(--color-bg-input));
+                    border: none;
+                    width: 40px; 
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: hsl(var(--color-text-main));
+                    cursor: pointer;
+                }
+                .back-btn:hover {
+                    background: hsl(var(--color-border));
+                }
+                .animate-in {
+                    animation: fadeIn 0.3s ease-out forwards;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                @media (max-width: 768px) {
+                    .settings-layout {
+                        display: block;
+                    }
+                    .mobile-hidden {
+                        display: none;
+                    }
+                    .mobile-visible {
+                        display: block;
+                    }
+                    .mobile-header {
+                        display: flex;
+                    }
+                    /* Ensure content takes proper width */
+                    .settings-column {
+                        width: 100%;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, Maximize2, Calendar, User, DollarSign, AlertTriangle, ZoomIn, ZoomOut } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -103,7 +104,6 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
                                         <DollarSign size={14} /> <span style={{ fontSize: '12px', fontWeight: 600 }}>Potential Reward</span>
                                     </div>
                                     <div style={{ fontSize: '14px', fontWeight: 600, color: textColor }}>
-                                        {/* Assuming 2x logic or similar */}
                                         ₹{parseInt(task.stake) * 2}
                                     </div>
                                 </div>
@@ -179,70 +179,89 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
             </div>
 
             {/* Image Zoom Modal */}
-            {imageModal && task.proofUrl && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0, 0, 0, 0.95)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '20px'
-                    }}
-                    onClick={() => { setImageModal(false); setZoom(1); }}
-                >
-                    {/* Zoom Controls */}
-                    <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '12px', zIndex: 10000 }}>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(z + 0.5, 3)); }}
-                            style={{
-                                background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
-                                border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}
-                        >
-                            <ZoomIn size={20} />
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(z - 0.5, 0.5)); }}
-                            style={{
-                                background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
-                                border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}
-                        >
-                            <ZoomOut size={20} />
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setImageModal(false); setZoom(1); }}
-                            style={{
-                                background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
-                                border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
+            <AnimatePresence>
+                {imageModal && task.proofUrl && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'rgba(0, 0, 0, 0.95)',
+                            zIndex: 9999,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '20px',
+                            overflow: 'hidden'
+                        }}
+                        onClick={() => { setImageModal(false); setZoom(1); }}
+                    >
+                        {/* Zoom Controls */}
+                        <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '12px', zIndex: 10000 }}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(z + 0.5, 4)); }}
+                                style={{
+                                    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                                    border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <ZoomIn size={20} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(z - 0.5, 1)); }}
+                                style={{
+                                    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                                    border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <ZoomOut size={20} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setImageModal(false); setZoom(1); }}
+                                style={{
+                                    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                                    border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
 
-                    {/* Zoomed Image */}
-                    <div style={{ overflow: 'auto', maxWidth: '100%', maxHeight: '100%' }} onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={task.proofUrl}
-                            alt="Zoomed Proof"
-                            style={{
-                                transform: `scale(${zoom})`,
-                                transformOrigin: 'center',
-                                transition: 'transform 0.2s',
-                                maxWidth: 'none',
-                                cursor: zoom > 1 ? 'grab' : 'default'
-                            }}
-                        />
-                    </div>
-                </div>
-            )}
+                        {/* Zoomed Image Container with Panning */}
+                        <div
+                            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <motion.img
+                                src={task.proofUrl}
+                                alt="Zoomed Proof"
+                                drag={zoom > 1}
+                                dragConstraints={{
+                                    left: -300 * zoom,
+                                    right: 300 * zoom,
+                                    top: -300 * zoom,
+                                    bottom: 300 * zoom
+                                }}
+                                dragElastic={0.1}
+                                animate={{ scale: zoom }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                style={{
+                                    maxWidth: '90vw',
+                                    maxHeight: '90vh',
+                                    objectFit: 'contain',
+                                    cursor: zoom > 1 ? 'grab' : 'default',
+                                }}
+                                whileTap={{ cursor: zoom > 1 ? 'grabbing' : 'default' }}
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style>{`
                 .action-btn:hover:not(:disabled) {
