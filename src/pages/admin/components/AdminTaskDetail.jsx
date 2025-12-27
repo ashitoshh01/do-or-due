@@ -1,7 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Maximize2, Calendar, User, DollarSign, AlertTriangle, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, Check, X, Maximize2, Calendar, User, DollarSign, AlertTriangle, ZoomIn, ZoomOut, FileText, Video, Music, File, ExternalLink, Download } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
+
+// Helper to detect file type from URL or data URL
+const getFileType = (url) => {
+    if (!url) return 'unknown';
+
+    try {
+        // Check if it's a Base64 data URL (most common case for this app)
+        // Format: data:mime/type;base64,... 
+        if (url.startsWith('data:')) {
+            const mimeMatch = url.match(/^data:([^;,]+)/);
+            if (mimeMatch) {
+                const mimeType = mimeMatch[1].toLowerCase();
+
+                if (mimeType.startsWith('image/')) return 'image';
+                if (mimeType.startsWith('video/')) return 'video';
+                if (mimeType.startsWith('audio/')) return 'audio';
+                if (mimeType === 'application/pdf') return 'pdf';
+                if (mimeType.includes('word') || mimeType.includes('document')) return 'document';
+                if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'other';
+                if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'other';
+
+                // Default for unknown MIME types in data URLs
+                return 'other';
+            }
+        }
+
+        // Handle regular URLs (Firebase Storage, etc.)
+        // Decode URL to handle Firebase Storage encoded paths
+        const decodedUrl = decodeURIComponent(url).toLowerCase();
+
+        // Extract file path - handle Firebase Storage URLs
+        // Firebase URLs look like: .../o/proofs%2FuserId%2Ffile.pdf?...
+        const urlWithoutQuery = decodedUrl.split('?')[0];
+
+        // Check decoded URL for extensions
+        if (urlWithoutQuery.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg|heic|heif)$/)) {
+            return 'image';
+        }
+        if (urlWithoutQuery.match(/\.(mp4|webm|mov|avi|mkv|m4v|3gp|wmv)$/)) {
+            return 'video';
+        }
+        if (urlWithoutQuery.match(/\.(mp3|wav|ogg|m4a|aac|flac|wma)$/)) {
+            return 'audio';
+        }
+        if (urlWithoutQuery.match(/\.pdf$/)) {
+            return 'pdf';
+        }
+        if (urlWithoutQuery.match(/\.(doc|docx)$/)) {
+            return 'document';
+        }
+        if (urlWithoutQuery.match(/\.(xls|xlsx|ppt|pptx|txt|rtf|csv)$/)) {
+            return 'other';
+        }
+        if (urlWithoutQuery.match(/\.(zip|rar|7z|tar|gz)$/)) {
+            return 'other';
+        }
+
+        // Also check content type hints in the URL
+        if (decodedUrl.includes('image/') || decodedUrl.includes('image%2f')) {
+            return 'image';
+        }
+        if (decodedUrl.includes('video/') || decodedUrl.includes('video%2f')) {
+            return 'video';
+        }
+        if (decodedUrl.includes('audio/') || decodedUrl.includes('audio%2f')) {
+            return 'audio';
+        }
+        if (decodedUrl.includes('application/pdf') || decodedUrl.includes('application%2fpdf')) {
+            return 'pdf';
+        }
+
+    } catch (e) {
+        console.error('Error parsing proof URL:', e);
+    }
+
+    // Default to 'other' instead of image to force download buttons when unknown
+    return 'other';
+};
 
 const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
     const { isDark } = useTheme();
@@ -9,6 +87,14 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
     const [reason, setReason] = useState('');
     const [imageModal, setImageModal] = useState(false);
     const [zoom, setZoom] = useState(1);
+
+    // Detect file type
+    const fileType = useMemo(() => {
+        const type = getFileType(task?.proofUrl);
+        console.log('Proof URL:', task?.proofUrl);
+        console.log('Detected file type:', type);
+        return type;
+    }, [task?.proofUrl]);
 
     const handleSubmitReject = () => {
         if (!reason.trim()) return alert("Reason required");
@@ -24,17 +110,94 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
     return (
         <>
             <div className="animate-in" style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '32px' }}>
-                {/* LEFT: Image Viewer */}
-                <div style={{ flex: '1.2', background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* LEFT: Proof Viewer - Handles multiple file types */}
+                <div style={{ flex: '1.2', background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                     {task.proofUrl ? (
-                        <img
-                            src={task.proofUrl}
-                            alt="Full Proof"
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
-                            onClick={() => setImageModal(true)}
-                        />
+                        <>
+                            {/* Image */}
+                            {fileType === 'image' && (
+                                <img
+                                    src={task.proofUrl}
+                                    alt="Full Proof"
+                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
+                                    onClick={() => setImageModal(true)}
+                                />
+                            )}
+
+                            {/* PDF - Embedded viewer */}
+                            {fileType === 'pdf' && (
+                                <iframe
+                                    src={task.proofUrl}
+                                    title="PDF Proof"
+                                    style={{ width: '100%', height: '100%', border: 'none', borderRadius: '12px' }}
+                                />
+                            )}
+
+                            {/* Video */}
+                            {fileType === 'video' && (
+                                <video
+                                    src={task.proofUrl}
+                                    controls
+                                    style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '12px' }}
+                                >
+                                    Your browser does not support video playback.
+                                </video>
+                            )}
+
+                            {/* Audio */}
+                            {fileType === 'audio' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+                                    <Music size={80} color="#94A3B8" />
+                                    <p style={{ color: '#94A3B8', fontSize: '16px', fontWeight: 600 }}>Audio Proof</p>
+                                    <audio src={task.proofUrl} controls style={{ width: '300px' }}>
+                                        Your browser does not support audio playback.
+                                    </audio>
+                                </div>
+                            )}
+
+                            {/* Document (Word, etc.) or Other files */}
+                            {(fileType === 'document' || fileType === 'other') && (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', padding: '40px' }}>
+                                    <FileText size={80} color="#94A3B8" />
+                                    <p style={{ color: 'white', fontSize: '18px', fontWeight: 600 }}>
+                                        {fileType === 'document' ? 'Document File' : 'File Attachment'}
+                                    </p>
+                                    <p style={{ color: '#94A3B8', fontSize: '14px', textAlign: 'center' }}>
+                                        This file type cannot be previewed directly.
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <a
+                                            href={task.proofUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '12px 24px', borderRadius: '12px',
+                                                background: '#3B82F6', color: 'white',
+                                                textDecoration: 'none', fontWeight: 600, fontSize: '14px'
+                                            }}
+                                        >
+                                            <ExternalLink size={18} /> Open in New Tab
+                                        </a>
+                                        <a
+                                            href={task.proofUrl}
+                                            download
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '12px 24px', borderRadius: '12px',
+                                                background: 'rgba(255,255,255,0.1)', color: 'white',
+                                                textDecoration: 'none', fontWeight: 600, fontSize: '14px',
+                                                border: '1px solid rgba(255,255,255,0.2)'
+                                            }}
+                                        >
+                                            <Download size={18} /> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     ) : (
-                        <div style={{ color: 'white' }}>No Image Data</div>
+                        <div style={{ color: 'white' }}>No Proof Data</div>
                     )}
 
                     <div style={{ position: 'absolute', top: '24px', left: '24px' }}>
@@ -50,18 +213,36 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
                         </button>
                     </div>
 
+                    {/* View Full / Open Tab buttons - show appropriately */}
                     {task.proofUrl && (
-                        <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
-                            <button
-                                onClick={() => setImageModal(true)}
-                                style={{
-                                    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
-                                    border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600
-                                }}
-                            >
-                                <Maximize2 size={18} /> View Full
-                            </button>
+                        <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '12px' }}>
+                            {fileType === 'image' && (
+                                <button
+                                    onClick={() => setImageModal(true)}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                                        border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600
+                                    }}
+                                >
+                                    <Maximize2 size={18} /> View Full
+                                </button>
+                            )}
+                            {fileType !== 'image' && (
+                                <a
+                                    href={task.proofUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                                        border: 'none', color: 'white', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600,
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <ExternalLink size={18} /> Open in Tab
+                                </a>
+                            )}
                         </div>
                     )}
                 </div>
@@ -178,9 +359,9 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
                 </div>
             </div>
 
-            {/* Image Zoom Modal */}
+            {/* Image Zoom Modal - Only for images */}
             <AnimatePresence>
-                {imageModal && task.proofUrl && (
+                {imageModal && task.proofUrl && fileType === 'image' && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}

@@ -78,8 +78,9 @@ const Plans = ({ onShowPopup }) => {
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '16px',
-                marginBottom: '28px'
+                gap: '20px',
+                marginBottom: '28px',
+                padding: '0 4px'
             }}>
                 {plans.map((plan, index) => (
                     <div

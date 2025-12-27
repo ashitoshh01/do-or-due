@@ -660,19 +660,31 @@ body {
   .podium-grid {
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
   }
 
   .podium-card.rank-1,
   .podium-card.rank-2,
   .podium-card.rank-3 {
-    order: unset;
     width: 100%;
     max-width: 280px;
     flex-direction: row;
     text-align: left;
     padding: 16px;
     justify-content: flex-start;
+  }
+
+  /* Force correct order: 1st, 2nd, 3rd from top to bottom */
+  .podium-card.rank-1 {
+    order: 1 !important;
+  }
+
+  .podium-card.rank-2 {
+    order: 2 !important;
+  }
+
+  .podium-card.rank-3 {
+    order: 3 !important;
   }
 
   .podium-avatar-container {

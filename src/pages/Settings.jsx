@@ -487,6 +487,14 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                 }
 
                 @media (max-width: 768px) {
+                    .settings-container {
+                        display: flex;
+                        flex-direction: column;
+                        min-height: calc(100vh - 160px);
+                        justify-content: center;
+                        padding-top: 20px;
+                        padding-bottom: 100px;
+                    }
                     .settings-layout {
                         display: block;
                     }
@@ -502,6 +510,11 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                     /* Ensure content takes proper width */
                     .settings-column {
                         width: 100%;
+                    }
+                    .sidebar-menu {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
                     }
                 }
             `}</style>

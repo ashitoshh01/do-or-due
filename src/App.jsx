@@ -25,6 +25,10 @@ import { subscribeToTasks, subscribeToUser, addTask, deleteTask, updateTaskStatu
 import { verifyProof } from './services/aiService';
 import { verifyUTR, recordManualPayment } from './services/paymentService';
 
+// Firebase Storage for large file uploads
+import { storage } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 function MainApp() {
   const { currentUser, loading } = useAuth();
 
@@ -88,42 +92,61 @@ function MainApp() {
   const handleVerify = async (file) => {
     if (!verificationTask) return;
 
-    // 1. Show local loading state if needed, or just process
+    // Warn about large files (Base64 has ~1MB limit in Firestore)
+    const maxSizeForBase64 = 700 * 1024; // ~700KB to be safe
+    if (file.size > maxSizeForBase64) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      setPopup({
+        isOpen: true,
+        title: 'File Too Large',
+        message: `This file is ${sizeMB}MB. Currently only files under 700KB are supported. Please compress your file or use a smaller image/video.`,
+        type: 'error'
+      });
+      return;
+    }
+
     setIsUploading(true);
 
     try {
-      // 2. Convert File to Base64 (for Prototype) or Upload to Storage
-      // Ideally use Storage, but keeping the Base64 logic from before or switching to Storage if easier.
-      // Let's use Base64 for simplicity in prototype unless size is an issue.
+      // Convert File to Base64
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onloadend = async () => {
         const base64data = reader.result;
 
-        // 3. Update Firestore: Status -> 'pending_review'
+        // Update Firestore with Base64 data
         await updateTaskStatus(currentUser.uid, verificationTask.id, 'pending_review', base64data);
 
-        // 4. Close Modal & Reset State
+        // Close Modal & Reset State
         setVerificationTask(null);
         setIsUploading(false);
-        setAppView('dashboard'); // Stay on dashboard (or ensure we are there)
+        setAppView('dashboard');
 
-        // Optional: Show a small toast success
         setPopup({
           isOpen: true,
           title: 'Proof Submitted',
-          message: 'Your proof has been sent to the Ai model for review.',
+          message: 'Your proof has been sent for review.',
           type: 'success'
         });
       };
 
+      reader.onerror = () => {
+        setIsUploading(false);
+        setPopup({
+          isOpen: true,
+          title: 'Upload Failed',
+          message: 'Failed to read file. Please try again.',
+          type: 'error'
+        });
+      };
+
     } catch (err) {
-      console.error(err);
+      console.error('Upload error:', err);
       setIsUploading(false);
       setPopup({
         isOpen: true,
         title: 'Upload Failed',
-        message: 'Failed to submit proof. Please try again.',
+        message: err.message || 'Failed to submit proof. Please try again.',
         type: 'error'
       });
     }

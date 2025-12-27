@@ -1,6 +1,35 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Search, Filter, Clock, Check, X } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Clock, Check, X, FileText, Video, Music, File } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
+
+// Helper to detect file type from URL or data URL
+const getFileType = (url) => {
+    if (!url) return 'unknown';
+
+    try {
+        // Check if it's a Base64 data URL
+        if (url.startsWith('data:')) {
+            const mimeMatch = url.match(/^data:([^;,]+)/);
+            if (mimeMatch) {
+                const mimeType = mimeMatch[1].toLowerCase();
+                if (mimeType.startsWith('image/')) return 'image';
+                if (mimeType.startsWith('video/')) return 'video';
+                if (mimeType.startsWith('audio/')) return 'audio';
+                if (mimeType === 'application/pdf') return 'pdf';
+                return 'other';
+            }
+        }
+        // Check URL for extensions
+        const urlLower = url.toLowerCase();
+        if (urlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/)) return 'image';
+        if (urlLower.match(/\.(mp4|webm|mov|avi)(\?|$)/)) return 'video';
+        if (urlLower.match(/\.(mp3|wav|ogg|m4a)(\?|$)/)) return 'audio';
+        if (urlLower.match(/\.pdf(\?|$)/)) return 'pdf';
+    } catch (e) {
+        console.error('Error detecting file type:', e);
+    }
+    return 'other';
+};
 
 const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
     const { isDark } = useTheme();
@@ -74,12 +103,45 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
                                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                                 }}
                             >
-                                {/* Img */}
-                                <div style={{ height: '140px', background: isDark ? '#0F172A' : '#F8FAFC', position: 'relative' }}>
+                                {/* Thumbnail - with file type icons */}
+                                <div style={{ height: '140px', background: isDark ? '#0F172A' : '#F8FAFC', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {task.proofUrl ? (
-                                        <img src={task.proofUrl} alt="Proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        (() => {
+                                            const fileType = getFileType(task.proofUrl);
+                                            if (fileType === 'image') {
+                                                return <img src={task.proofUrl} alt="Proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                                            } else if (fileType === 'pdf') {
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                        <FileText size={48} color="#EF4444" />
+                                                        <span style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>PDF Document</span>
+                                                    </div>
+                                                );
+                                            } else if (fileType === 'video') {
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                        <Video size={48} color="#8B5CF6" />
+                                                        <span style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Video File</span>
+                                                    </div>
+                                                );
+                                            } else if (fileType === 'audio') {
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                        <Music size={48} color="#3B82F6" />
+                                                        <span style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Audio File</span>
+                                                    </div>
+                                                );
+                                            } else {
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                        <File size={48} color="#64748B" />
+                                                        <span style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>File Attachment</span>
+                                                    </div>
+                                                );
+                                            }
+                                        })()
                                     ) : (
-                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CBD5E1' }}>No Image</div>
+                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CBD5E1' }}>No File</div>
                                     )}
                                     <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                                         <span style={{

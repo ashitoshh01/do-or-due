@@ -4,6 +4,7 @@ import { Shield, Mail, Lock, Zap } from 'lucide-react';
 // Note: We'll assume the parent component handles navigation after login via user state
 
 import { createUserProfile } from '../services/dbService';
+import { getFriendlyErrorMessage } from '../utils/errorMapping';
 
 const Login = ({ onNavigate }) => {
     const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ const Login = ({ onNavigate }) => {
             await login(email, password);
             // Auth listener in App.jsx will redirect
         } catch (err) {
-            setError('Failed to log in: ' + err.message);
+            setError(getFriendlyErrorMessage(err));
         }
         setLoading(false);
     };
@@ -33,7 +34,7 @@ const Login = ({ onNavigate }) => {
             await createUserProfile(result.user.uid, result.user.email);
         } catch (err) {
             console.error(err);
-            setError('Google Log in failed: ' + err.message);
+            setError(getFriendlyErrorMessage(err));
         }
     }
 

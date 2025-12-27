@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Shield, Mail, Lock, User } from 'lucide-react';
 
 import { createUserProfile } from '../services/dbService';
+import { getFriendlyErrorMessage } from '../utils/errorMapping';
 
 const Signup = ({ onNavigate }) => {
     const [email, setEmail] = useState('');
@@ -22,11 +23,10 @@ const Signup = ({ onNavigate }) => {
             // Auth listener handles redirect
         } catch (err) {
             if (err.code === 'auth/email-already-in-use') {
-                // Try logging in instead? Or just tell them to login.
                 setError('Email already exists. Redirecting to login...');
                 setTimeout(() => onNavigate('login'), 2000);
             } else {
-                setError('Failed to create account: ' + err.message);
+                setError(getFriendlyErrorMessage(err));
             }
         }
         setLoading(false);

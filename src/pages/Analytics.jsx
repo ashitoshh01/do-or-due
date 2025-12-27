@@ -48,20 +48,35 @@ const Analytics = ({ history }) => {
         }));
     }, [history]);
 
-    // Productivity Analysis (tasks created and completed over time)
+    // Productivity Analysis (tasks created and completed TODAY only)
     const productivityData = useMemo(() => {
         const hourCounts = Array(24).fill(0).map((_, i) => ({ hour: i, created: 0, completed: 0 }));
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        const todayEnd = todayStart + 24 * 60 * 60 * 1000;
 
         history.forEach(task => {
-            if (task.createdAt) {
-                const date = task.createdAt.toDate ? task.createdAt.toDate() : new Date(task.createdAt);
-                const hour = date.getHours();
-                hourCounts[hour].created++;
-            }
+            // Count tasks COMPLETED today (not created)
             if (task.completedAt && task.status === 'success') {
-                const date = task.completedAt.toDate ? task.completedAt.toDate() : new Date(task.completedAt);
-                const hour = date.getHours();
-                hourCounts[hour].completed++;
+                const completedDate = task.completedAt.toDate ? task.completedAt.toDate() : new Date(task.completedAt);
+                const completedTime = completedDate.getTime();
+
+                // Only include if completed today
+                if (completedTime >= todayStart && completedTime < todayEnd) {
+                    const hour = completedDate.getHours();
+                    hourCounts[hour].completed++;
+                }
+            }
+
+            // Also track tasks created today for context
+            if (task.createdAt) {
+                const createdDate = task.createdAt.toDate ? task.createdAt.toDate() : new Date(task.createdAt);
+                const createdTime = createdDate.getTime();
+
+                if (createdTime >= todayStart && createdTime < todayEnd) {
+                    const hour = createdDate.getHours();
+                    hourCounts[hour].created++;
+                }
             }
         });
 
@@ -120,7 +135,7 @@ const Analytics = ({ history }) => {
             </div>
 
             {/* Charts Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
                 {/* Pie Chart - Task Distribution */}
                 <div className="card">
                     <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: textColor }}>
@@ -185,10 +200,10 @@ const Analytics = ({ history }) => {
             {/* Productivity Analysis - Full Width */}
             <div className="card" style={{ marginTop: '24px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: textColor }}>
-                    Productivity Analysis (24-Hour Pattern)
+                    Today's Productivity (24-Hour Pattern)
                 </h2>
                 <p style={{ fontSize: '14px', color: secondaryColor, marginBottom: '16px' }}>
-                    Track when you create and complete tasks throughout the day to identify your peak productivity hours
+                    Tasks created and completed today - identify your peak productivity hours
                 </p>
                 <ResponsiveContainer width="100%" height={350}>
                     <AreaChart data={productivityData}>

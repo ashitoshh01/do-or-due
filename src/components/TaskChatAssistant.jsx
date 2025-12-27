@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Send, Camera, Loader, Bot, User } from 'lucide-react';
 
 /**
@@ -100,9 +101,9 @@ const TaskChatAssistant = ({ task, onClose }) => {
         }
     };
 
-    return (
+    return createPortal(
         <div className="modal-overlay" onClick={onClose} style={{
-            position: 'sticky',
+            position: 'fixed',
             top: 0,
             left: 0,
             width: '100vw',
@@ -110,21 +111,23 @@ const TaskChatAssistant = ({ task, onClose }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
+            zIndex: 10000,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(4px)'
         }}>
             <div
                 className="modal-content animate-in"
                 style={{
-                    maxWidth: '600px',
+                    maxWidth: '560px',
                     height: '80vh',
-                    width: '90%',
+                    width: '94%',
                     padding: '0',
                     display: 'flex',
                     flexDirection: 'column',
                     position: 'relative',
-                    zIndex: 10000
+                    zIndex: 10001,
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    border: '1px solid hsl(var(--color-border))'
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -150,11 +153,11 @@ const TaskChatAssistant = ({ task, onClose }) => {
                             <Bot size={20} color="white" />
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'hsl(var(--color-text-main))', margin: 0 }}>
+                            <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'hsl(var(--color-text-main))', margin: 0, letterSpacing: '-0.2px' }}>
                                 Task Assistant
                             </h2>
-                            <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', margin: 0 }}>
-                                Your personal guide
+                            <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', margin: 0, opacity: 0.8 }}>
+                                hello
                             </p>
                         </div>
                     </div>
@@ -176,15 +179,9 @@ const TaskChatAssistant = ({ task, onClose }) => {
                             padding: '40px 20px',
                             color: 'hsl(var(--color-text-secondary))'
                         }}>
-                            <Bot size={48} color="hsl(var(--color-text-secondary))" style={{ opacity: 0.5, marginBottom: '16px' }} />
-                            <p style={{ fontSize: '14px', marginBottom: '8px' }}>
-                                Start a conversation about your task:
-                            </p>
-                            <p style={{ fontSize: '16px', fontWeight: 600, color: 'hsl(var(--color-text-main))' }}>
-                                "{task.objective}"
-                            </p>
-                            <p style={{ fontSize: '12px', marginTop: '16px', opacity: 0.8 }}>
-                                I'll guide you without giving away the answers!
+                            <Bot size={48} color="hsl(var(--color-text-secondary))" style={{ opacity: 0.3, marginBottom: '20px' }} />
+                            <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))', marginBottom: '20px', fontWeight: 500 }}>
+                                Ask for help, tips, or motivation for this task!
                             </p>
                         </div>
                     )}
@@ -398,7 +395,8 @@ const TaskChatAssistant = ({ task, onClose }) => {
                     animation: spin 1s linear infinite;
                 }
             `}</style>
-        </div>
+        </div>,
+        document.body
     );
 };
 
