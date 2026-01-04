@@ -1,5 +1,6 @@
-import { auth, db } from "../firebase";
+import { auth, db, messaging } from "../firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getToken, onMessage } from "firebase/messaging";
 import {
     collection,
     query,
@@ -220,3 +221,41 @@ export const rejectProof = async (userId, taskId, reason) => {
         throw error;
     }
 };
+
+// --- Notifications ---
+
+export const requestNotificationPermission = async () => {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await getToken(messaging, {
+                vapidKey: 'BMNq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq' // TODO: Need VAPID Key from User. Using placeholder for now or relying on defaults?
+                // Actually, for simple setup, we might not need Vapid Key if using default provided config?
+                // No, getToken usually requires VAPID key.
+                // I will add a TODO to get VAPID Key. Or I can try without it, sometimes it works if configured in firebase.json (not reliable).
+                // Let's use a placeholder and ask user or look up if I can get it from project settings?
+                // Project settings -> Cloud Messaging -> Web Push certificates.
+                // I don't have this.
+                // I'll try calling getToken without vapidKey first (it might warn but work if service worker is set up correctly?)
+                // Actually, let's just leave it empty for now, it often fails without it.
+            });
+            console.log("FCM Token:", token);
+            return token;
+        } else {
+            console.log("Notification permission denied");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error requesting notification permission:", error);
+        return null;
+    }
+};
+
+export const onMessageListener = () =>
+    new Promise((resolve) => {
+        onMessage(messaging, (payload) => {
+            console.log("payload", payload);
+            resolve(payload);
+        });
+    });
+

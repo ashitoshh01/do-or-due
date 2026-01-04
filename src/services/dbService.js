@@ -120,7 +120,7 @@ export const addTask = async (userId, taskData) => {
     }
 
     // 1. Create Task in Subcollection
-    await addDoc(collection(db, "users", userId, "tasks"), {
+    const taskRef = await addDoc(collection(db, "users", userId, "tasks"), {
         userId, // Keep userId for reference if needed, though implicit in path
         objective: taskData.objective,
         stake: parseInt(taskData.stake),
@@ -134,6 +134,13 @@ export const addTask = async (userId, taskData) => {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
         "stats.staked": increment(parseInt(taskData.stake))
+    });
+
+    // 3. Trigger Notification (Fire & Forget)
+    triggerNotificationApi({
+        title: "New Task Created",
+        body: `${taskData.objective} ($${taskData.stake})`,
+        taskId: taskRef.id
     });
 };
 
@@ -185,4 +192,33 @@ export const updateTaskStatus = async (userId, taskId, status, proofUrl = null) 
         status,
         proofUrl
     });
+};
+
+// --- Notifications ---
+
+export const saveAdminToken = async (token) => {
+    if (!token) return;
+    // Save to a dedicated collection for admin tokens
+    // Using token as ID to prevent duplicates
+    await setDoc(doc(db, "admin_tokens", token), {
+        token: token,
+        updatedAt: new Date()
+    });
+};
+
+export const triggerNotificationApi = async (taskData) => {
+    try {
+        // Use Absolute URL so it works from Firebase Hosting / Localhost too
+        const API_URL = 'https://do-or-due.vercel.app/api/notify-admin';
+
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(taskData),
+        });
+    } catch (error) {
+        console.error("Failed to trigger notification API:", error);
+    }
 };
