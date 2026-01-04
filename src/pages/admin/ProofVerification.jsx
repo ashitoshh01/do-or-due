@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { subscribeToAdminTasks, approveProof, rejectProof, adminLogout } from '../../services/adminService';
+import { subscribeToAdminTasks, approveProof, rejectProof, adminLogout, requestNotificationPermission, onMessageListener } from '../../services/adminService';
+import { saveAdminToken } from '../../services/dbService';
 import { LogOut, RefreshCw, Moon, Sun } from 'lucide-react';
 import Popup from '../../components/Popup';
 import AdminDashboardHome from './components/AdminDashboardHome';
@@ -24,13 +25,30 @@ const ProofVerification = ({ onLogout }) => {
     const [processingId, setProcessingId] = useState(null);
     const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
 
-    // Load Proofs (REAL-TIME)
+    // Load Proofs (REAL-TIME) & Init Notifications
     useEffect(() => {
         setLoading(true);
         const unsubscribe = subscribeToAdminTasks((data) => {
             setProofs(data);
             setLoading(false);
         });
+
+        // Request Permission & Save Token
+        const initNotifications = async () => {
+            const token = await requestNotificationPermission();
+            if (token) {
+                await saveAdminToken(token);
+                console.log("Admin Notification Token Saved");
+            }
+        };
+        initNotifications();
+
+        // Listen for Foreground Messages
+        onMessageListener().then(payload => {
+            console.log('Foreground Message Received:', payload);
+            showPopup(payload.notification.title, payload.notification.body, 'info');
+        }).catch(err => console.log('failed: ', err));
+
         return () => unsubscribe();
     }, []);
 
