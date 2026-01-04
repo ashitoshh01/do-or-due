@@ -175,12 +175,14 @@ export const approveProof = async (userId, taskId, stakeAmount) => {
             // Based on previous code: balance + (stake * 2) implied doubling.
             // Let's stick to the previous 'completeTask' logic to match user expectations.
 
+            const reward = Math.floor(stakeAmount * 0.05);
+
             await updateDoc(userRef, {
-                balance: increment(stakeAmount * 2), // Return stake + equal reward
+                balance: increment(stakeAmount + reward), // Return stake + 5% reward
                 xp: increment(50),
                 streak: increment(1),
                 "stats.success": increment(1),
-                "stats.earned": increment(stakeAmount)
+                "stats.earned": increment(reward)
             });
         }
 

@@ -58,9 +58,9 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
     const borderColor = isDark ? '#334155' : '#E2E8F0';
 
     return (
-        <div className="animate-in">
+        <div className="animate-in admin-container">
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+            <div className="admin-header" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
                 <button
                     onClick={onBack}
                     style={{
@@ -85,7 +85,7 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
                     <h3 style={{ fontSize: '18px', fontWeight: 700, color: subTextColor }}>No tasks found in this category</h3>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                <div className="admin-task-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
                     {tasks.map(task => {
                         const badge = getStatusBadge(task.status);
                         return (
@@ -95,21 +95,26 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
                                 className="task-card"
                                 style={{
                                     background: cardBg,
-                                    borderRadius: '16px',
-                                    border: `1px solid ${borderColor}`,
+                                    borderRadius: '20px',
+                                    // Clean look: No border in light mode, just shadow
+                                    border: isDark ? `1px solid ${borderColor}` : '1px solid transparent',
                                     overflow: 'hidden',
                                     cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    boxShadow: isDark ? '0 4px 6px -1px rgba(0,0,0,0.2)' : '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)'
                                 }}
                             >
                                 {/* Thumbnail - with file type icons */}
-                                <div style={{ height: '140px', background: isDark ? '#0F172A' : '#F8FAFC', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ height: '160px', background: isDark ? '#0F172A' : '#F8FAFC', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                                     {task.proofUrl ? (
                                         (() => {
                                             const fileType = getFileType(task.proofUrl);
                                             if (fileType === 'image') {
-                                                return <img src={task.proofUrl} alt="Proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                                                return (
+                                                    <div style={{ width: '100%', height: '100%', transition: 'transform 0.5s' }} className="img-hover-zoom">
+                                                        <img src={task.proofUrl} alt="Proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    </div>
+                                                );
                                             } else if (fileType === 'pdf') {
                                                 return (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -158,25 +163,27 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
                                 </div>
 
                                 {/* Content */}
-                                <div style={{ padding: '16px' }}>
-                                    <h4 style={{ fontSize: '15px', fontWeight: 700, color: isDark ? '#E2E8F0' : '#1E293B', marginBottom: '8px', lineHeight: '1.4' }}>
+                                <div style={{ padding: '20px' }}>
+                                    <h4 style={{ fontSize: '15px', fontWeight: 600, color: isDark ? '#E2E8F0' : '#1E293B', marginBottom: '16px', lineHeight: '1.5', minHeight: '45px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                         {task.objective}
                                     </h4>
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '24px', height: '24px', background: isDark ? '#334155' : '#F1F5F9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: subTextColor }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: '28px', height: '28px', background: isDark ? '#334155' : '#F1F5F9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: subTextColor, border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}` }}>
                                                 {task.userName?.charAt(0)}
                                             </div>
-                                            <span style={{ fontSize: '12px', color: subTextColor, fontWeight: 500 }}>{task.userName?.split(' ')[0]}</span>
+                                            <span style={{ fontSize: '13px', color: subTextColor, fontWeight: 500 }}>{task.userName?.split(' ')[0]}</span>
                                         </div>
-                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#D97706' }}>₹{task.stake}</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#F59E0B' : '#D97706', background: isDark ? 'rgba(245, 158, 11, 0.1)' : '#FEF3C7', padding: '4px 8px', borderRadius: '8px' }}>
+                                            ₹{task.stake}
+                                        </span>
                                     </div>
 
                                     {/* Footer Timestamp */}
-                                    <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${isDark ? '#334155' : '#F8FAFC'}`, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: subTextColor }}>
-                                        <Clock size={12} />
-                                        {task.createdAt?.seconds ? new Date(task.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}
+                                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${isDark ? '#334155' : '#F1F5F9'}`, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: subTextColor }}>
+                                        <Clock size={14} />
+                                        {task.createdAt?.seconds ? new Date(task.createdAt.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                                     </div>
                                 </div>
                             </div>
@@ -186,9 +193,11 @@ const AdminTaskList = ({ tasks, category, onBack, onSelectTask }) => {
             )}
             <style>{`
                 .task-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-                    border-color: ${categoryColor}33 !important; /* low opacity color */
+                    transform: translateY(-6px);
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+                }
+                .task-card:hover .img-hover-zoom {
+                    transform: scale(1.05);
                 }
             `}</style>
         </div>
