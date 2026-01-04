@@ -78,7 +78,17 @@ export default async function handler(req, res) {
             },
             data: {
                 taskId: taskId || 'unknown',
-                url: '/admin/verification' // Action URL if supported by client handling
+                url: '/admin/verification'
+            },
+            // Add specific WebPush options
+            webpush: {
+                fcm_options: {
+                    link: '/admin/verification'
+                },
+                notification: {
+                    icon: '/vite.svg',
+                    click_action: '/admin/verification'
+                }
             },
             tokens: uniqueTokens,
         };

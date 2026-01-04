@@ -19,12 +19,37 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
     // Customize notification here
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
-        icon: '/vite.svg' // Using vite logo as placeholder
+        icon: '/vite.svg',
+        data: payload.data // Pass data to the notification so we can use it on click
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener('notificationclick', function (event) {
+    console.log('Notification click received.');
+    event.notification.close();
+
+    // Define the URL to open (can be dynamic based on event.notification.data.url)
+    const urlToOpen = event.notification.data?.url || '/';
+
+    // This looks to see if the current is already open and focuses if it is
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (windowClients) {
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                if (client.url.includes(urlToOpen) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
 });
