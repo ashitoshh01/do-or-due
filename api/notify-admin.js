@@ -28,6 +28,18 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
+    if (req.method === 'GET') {
+        return res.status(200).json({
+            status: 'API Reachable',
+            envCheck: {
+                hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+                hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+                hasKey: !!process.env.FIREBASE_PRIVATE_KEY,
+                keyLength: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.length : 0
+            }
+        });
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
@@ -93,6 +105,21 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Notification API Error:', error);
-        return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        // Determine detailed error
+        const errorDetails = {
+            message: error.message,
+            stack: error.stack,
+            code: error.code || 'UNKNOWN_ERROR',
+            adminInitialized: !!admin.apps.length,
+            envCheck: {
+                hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+                hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+                hasKey: !!process.env.FIREBASE_PRIVATE_KEY
+            }
+        };
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            details: errorDetails
+        });
     }
 }

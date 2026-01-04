@@ -136,12 +136,7 @@ export const addTask = async (userId, taskData) => {
         "stats.staked": increment(parseInt(taskData.stake))
     });
 
-    // 3. Trigger Notification (Fire & Forget)
-    triggerNotificationApi({
-        title: "New Task Created",
-        body: `${taskData.objective} ($${taskData.stake})`,
-        taskId: taskRef.id
-    });
+    // 3. Trigger Notification REMOVED (User requested notification only on Proof Upload)
 };
 
 export const deleteTask = async (userId, taskId) => {
@@ -190,6 +185,33 @@ export const updateTaskStatus = async (userId, taskId, status, proofUrl = null) 
         status,
         proofUrl
     });
+
+    // Trigger Notification for Admin if status is 'pending_review' (Proof Uploaded)
+    if (status === 'pending_review') {
+        // Fetch task details for the body
+        // (Optimally we'd pass title, but fetching is safer to ensure data availability)
+        // For speed, since we don't have title here readily without a read, 
+        // I will just use a generic message or assume the caller passed it? 
+        // No, caller didn't pass title.
+        // Let's do a quick read or just say "A user uploaded proof".
+        // Better: "Proof Uploaded ($STAKE)"
+
+        // Let's try to get the task to make it nice
+        try {
+            const tDoc = await getDoc(doc(db, "users", userId, "tasks", taskId));
+            if (tDoc.exists()) {
+                const text = tDoc.data().objective;
+                const stake = tDoc.data().stake;
+                triggerNotificationApi({
+                    title: "Proof Uploaded",
+                    body: `${text} ($${stake})`,
+                    taskId: taskId
+                });
+            }
+        } catch (e) {
+            console.error("Error fetching task for notification", e);
+        }
+    }
 };
 
 // --- Notifications ---
