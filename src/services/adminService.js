@@ -227,7 +227,7 @@ export const requestNotificationPermission = async () => {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
             const token = await getToken(messaging, {
-                vapidKey: 'BMNq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq-8Nq' // TODO: Need VAPID Key from User. Using placeholder for now or relying on defaults?
+                vapidKey: 'BFI5xi6yRNZKfECvYn1gOtinOnPm1zLfU-pHkzBsTLdNWJV1xaLh_HoHXzzz3W43ssnW1r3OM3LmPJUykyMYnJU'
                 // Actually, for simple setup, we might not need Vapid Key if using default provided config?
                 // No, getToken usually requires VAPID key.
                 // I will add a TODO to get VAPID Key. Or I can try without it, sometimes it works if configured in firebase.json (not reliable).

@@ -69,6 +69,20 @@ function MainApp() {
     }
   }, [currentUser, isAdmin]);
 
+  // 3. Routing Logic (Basic URL handling)
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('/admin')) {
+      // Check if we are already authenticated as admin
+      if (isAdminAuthenticated()) {
+        setIsAdmin(true);
+      } else {
+        // Go to Admin Login
+        setAuthView('admin_login');
+      }
+    }
+  }, []);
+
   // 2. Handlers
   const handleCommit = async (taskData) => {
     const stakeAmount = parseInt(taskData.stake);

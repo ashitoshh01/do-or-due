@@ -109,9 +109,10 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
 
     return (
         <>
-            <div className="animate-in" style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '32px' }}>
+
+            <div className="animate-in task-detail-container">
                 {/* LEFT: Proof Viewer - Handles multiple file types */}
-                <div style={{ flex: '1.2', background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                <div className="proof-section" style={{ background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                     {task.proofUrl ? (
                         <>
                             {/* Image */}
@@ -248,7 +249,7 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
                 </div>
 
                 {/* RIGHT: Details & Actions */}
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+                <div className="info-section">
                     <div style={{ background: cardBg, borderRadius: '24px', padding: '32px', height: '100%', display: 'flex', flexDirection: 'column' }}>
 
                         {/* Header Info */}
@@ -452,6 +453,47 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
                 .action-btn:disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
+                }
+
+                /* Responsive Layout */
+                .task-detail-container {
+                    height: calc(100vh - 140px);
+                    display: flex;
+                    gap: 32px;
+                }
+                .proof-section {
+                    flex: 1.2;
+                }
+                .info-section {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    overflow-y: auto;
+                    /* Hide scrollbar for cleaner look */
+                    scrollbar-width: none; 
+                }
+                .info-section::-webkit-scrollbar {
+                    display: none;
+                }
+
+                @media (max-width: 1024px) {
+                    .task-detail-container {
+                        height: auto !important;
+                        flex-direction: column;
+                        gap: 24px;
+                        padding-bottom: 40px;
+                    }
+                    .proof-section {
+                        flex: none;
+                        height: 60vh; /* Tall image on mobile */
+                        width: 100%;
+                    }
+                    .info-section {
+                        flex: none;
+                        width: 100%;
+                        height: auto;
+                        overflow-y: visible;
+                    }
                 }
             `}</style>
         </>

@@ -223,6 +223,8 @@ const ProofVerification = ({ onLogout }) => {
             {/* Main Area */}
             <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
                 {renderContent()}
+
+
             </main>
 
             <Popup
