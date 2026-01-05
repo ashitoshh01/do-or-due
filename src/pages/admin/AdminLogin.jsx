@@ -33,6 +33,8 @@ const AdminLogin = ({ onLogin }) => {
     const borderColor = isDark ? '#334155' : '#E2E8F0';
     const inputBg = isDark ? '#0F172A' : '#F1F5F9';
 
+    const [diagnosticResult, setDiagnosticResult] = useState(null);
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -43,6 +45,7 @@ const AdminLogin = ({ onLogin }) => {
             color: textColor,
             transition: 'background-color 0.3s, color 0.3s'
         }}>
+            {/* ... (Theme Toggle Button remains same) ... */}
             <div style={{ position: 'absolute', top: 24, right: 24 }}>
                 <button
                     onClick={toggleTheme}
@@ -71,8 +74,11 @@ const AdminLogin = ({ onLogin }) => {
                 background: cardBg,
                 borderRadius: '16px',
                 border: `1px solid ${borderColor}`,
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                maxHeight: '90vh',
+                overflowY: 'auto'
             }}>
+                {/* ... (Header and Error display remain same) ... */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <div style={{
                         width: '64px', height: '64px', background: isDark ? '#334155' : '#E0F2FE',
@@ -97,6 +103,7 @@ const AdminLogin = ({ onLogin }) => {
                 )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* ... (Inputs remain same) ... */}
                     <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: subTextColor, marginBottom: '8px' }}>EMAIL</label>
                         <div style={{
@@ -152,7 +159,7 @@ const AdminLogin = ({ onLogin }) => {
 
                 <div style={{ marginTop: '24px', textAlign: 'center' }}>
                     <button
-                        onClick={() => window.location.reload()} // Quick way to go back to main app for now
+                        onClick={() => window.location.reload()}
                         style={{
                             background: 'none', border: 'none', color: subTextColor,
                             fontSize: '13px', cursor: 'pointer', textDecoration: 'underline'
@@ -160,6 +167,63 @@ const AdminLogin = ({ onLogin }) => {
                     >
                         Back to DoOrDue
                     </button>
+                </div>
+
+                {/* API Diagnostics (Added for Debugging) */}
+                <div style={{ marginTop: '30px', borderTop: `1px dashed ${borderColor}`, paddingTop: '20px' }}>
+                    <p style={{ fontSize: '11px', color: subTextColor, marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>Diagnostics</p>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            setDiagnosticResult('Testing...');
+                            try {
+                                const res = await fetch('https://do-or-due.vercel.app/api/notify-admin', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ title: 'Debug', body: 'Test' })
+                                });
+                                const text = await res.text();
+                                try {
+                                    const json = JSON.parse(text);
+                                    setDiagnosticResult(`Status: ${res.status}\n\n${JSON.stringify(json, null, 2)}`);
+                                } catch (e) {
+                                    setDiagnosticResult(`Status: ${res.status}\n\nRaw Response:\n${text}`);
+                                }
+                            } catch (e) {
+                                setDiagnosticResult(`Network Error: ${e.message}\n(Check if AdBlock is blocking the request)`);
+                            }
+                        }}
+                        style={{
+                            width: '100%',
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3B82F6',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '8px',
+                            padding: '8px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        Test Notification API
+                    </button>
+
+                    {diagnosticResult && (
+                        <div style={{
+                            padding: '10px',
+                            background: isDark ? '#000' : '#f1f5f9',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all',
+                            color: isDark ? '#fff' : '#333',
+                            border: `1px solid ${borderColor}`
+                        }}>
+                            {diagnosticResult}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

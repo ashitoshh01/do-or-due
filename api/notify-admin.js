@@ -7,8 +7,10 @@ if (!admin.apps.length) {
             credential: admin.credential.cert({
                 projectId: process.env.FIREBASE_PROJECT_ID,
                 clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                // Replace escaped newlines if they exist (common issue with env vars)
-                privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+                // Replace escaped newlines AND remove any surrounding quotes (common copy-paste error)
+                privateKey: process.env.FIREBASE_PRIVATE_KEY
+                    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
+                    : undefined,
             }),
         });
     } catch (error) {
@@ -121,11 +123,16 @@ export default async function handler(req, res) {
             stack: error.stack,
             code: error.code || 'UNKNOWN_ERROR',
             adminInitialized: !!admin.apps.length,
-            envCheck: {
-                hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
-                hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-                hasKey: !!process.env.FIREBASE_PRIVATE_KEY
-            }
+            hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+            hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+            hasKey: !!process.env.FIREBASE_PRIVATE_KEY,
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            keyCharCount: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.length : 0,
+            keyLineCount: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.split('\n').length : 0,
+            keyHasLiteralSlashN: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.includes('\\n') : false,
+            keyStart: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(0, 10) : 'N/A',
+            keyEnd: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(process.env.FIREBASE_PRIVATE_KEY.length - 10) : 'N/A'
         };
         return res.status(500).json({
             message: 'Internal Server Error',
