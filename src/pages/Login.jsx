@@ -10,6 +10,7 @@ const Login = ({ onNavigate }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const { login, googleLogin } = useAuth();
 
@@ -17,13 +18,15 @@ const Login = ({ onNavigate }) => {
         e.preventDefault();
         try {
             setError('');
+            setSuccess('');
             setLoading(true);
             await login(email, password);
+            setSuccess('Login successful! Redirecting...');
             // Auth listener in App.jsx will redirect
         } catch (err) {
             setError(getFriendlyErrorMessage(err));
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleGoogle = async () => {
@@ -32,6 +35,7 @@ const Login = ({ onNavigate }) => {
             const result = await googleLogin();
             // Ensure profile exists (safe to call multiple times)
             await createUserProfile(result.user.uid, result.user.email);
+            setSuccess('Google login successful!');
         } catch (err) {
             console.error(err);
             setError(getFriendlyErrorMessage(err));
@@ -56,6 +60,8 @@ const Login = ({ onNavigate }) => {
                 </p>
 
                 {error && <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'hsl(var(--color-accent-red))', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
+
+                {success && <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: 'hsl(var(--color-accent-green))', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', textAlign: 'center', fontWeight: 600 }}>{success}</div>}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div className="login-input-group">
@@ -82,8 +88,8 @@ const Login = ({ onNavigate }) => {
                         </div>
                     </div>
 
-                    <button disabled={loading} className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
-                        {loading ? 'Logging in...' : 'Sign In'}
+                    <button disabled={loading || success} className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
+                        {success ? 'Success!' : (loading ? 'Logging in...' : 'Sign In')}
                     </button>
                 </form>
 

@@ -16,14 +16,14 @@ import {
 
 // --- User Operations ---
 
-export const createUserProfile = async (userId, email) => {
+export const createUserProfile = async (userId, email, name = null) => {
     const userRef = doc(db, "users", userId);
     const snapshot = await getDoc(userRef);
 
     if (!snapshot.exists()) {
         await setDoc(userRef, {
             email,
-            name: email.split('@')[0], // Default name from email
+            name: name || email.split('@')[0], // Use provided name or default from email
             balance: 100,
             xp: 0,
             streak: 0,
@@ -155,12 +155,14 @@ export const completeTask = async (userId, taskId, stakeAmount) => {
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
         const data = userSnap.data();
+        const reward = Math.floor(stakeAmount * 0.05); // 5% reward
+
         await updateDoc(userRef, {
-            balance: data.balance + (stakeAmount * 2), // Return stake + reward
+            balance: data.balance + stakeAmount + reward, // Return stake + 5% reward
             xp: (data.xp || 0) + 50,
             streak: (data.streak || 0) + 1,
             "stats.success": increment(1),
-            "stats.earned": increment(stakeAmount)
+            "stats.earned": increment(reward)
         });
     }
 }
