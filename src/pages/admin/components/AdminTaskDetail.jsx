@@ -109,10 +109,9 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
 
     return (
         <>
-
-            <div className="animate-in task-detail-container">
+            <div className="animate-in" style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '32px' }}>
                 {/* LEFT: Proof Viewer - Handles multiple file types */}
-                <div className="proof-section" style={{ background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                <div style={{ flex: '1.2', background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                     {task.proofUrl ? (
                         <>
                             {/* Image */}

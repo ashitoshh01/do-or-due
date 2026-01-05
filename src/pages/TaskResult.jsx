@@ -48,8 +48,8 @@ const TaskResult = ({ result, task, onHome }) => {
 
                     <div style={{ backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '16px', marginBottom: '32px' }}>
                         <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reward Unlocked</p>
-                        <div style={{ fontSize: '32px', fontWeight: 800, color: '#FBBF24', margin: '8px 0' }}>+100 XP</div>
-                        <p style={{ fontSize: '14px', color: '#94A3B8' }}>Streak: 5 Days</p>
+                        <div style={{ fontSize: '32px', fontWeight: 800, color: '#FBBF24', margin: '8px 0' }}>+{Math.floor(task.stake * 0.05)} Coins</div>
+                        <p style={{ fontSize: '14px', color: '#94A3B8' }}>+50 XP • Streak: 5 Days</p>
                     </div>
 
                     <button className="btn" onClick={onHome} style={{ width: '100%', backgroundColor: '#0F172A', color: 'white', padding: '16px' }}>

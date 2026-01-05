@@ -809,6 +809,11 @@ body {
   font-size: 14px;
 }
 
+.login-input-wrapper input::placeholder {
+  color: hsl(var(--color-text-secondary));
+  opacity: 0.6;
+}
+
 .login-input-wrapper svg {
   color: hsl(var(--color-text-secondary));
 }
@@ -1338,5 +1343,100 @@ body {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ---------- RESPONSIVE DESIGN FOR ADMIN SECTION ---------- */
+@media (max-width: 1024px) {
+
+  /* Tablet and below */
+  .admin-detail-layout {
+    flex-direction: column !important;
+    gap: 24px !important;
+    height: auto !important;
+  }
+
+  .admin-proof-viewer {
+    min-height: 400px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile devices */
+
+  /* Admin Dashboard Cards Grid */
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Admin Task List Grid */
+  .admin-task-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin Header - Stack vertically */
+  .admin-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+  }
+
+  /* Stats Grid */
+  .admin-system-status {
+    padding: 20px !important;
+  }
+
+  .status-bars-container {
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+
+  .status-bars-container>div {
+    width: 100% !important;
+  }
+
+  /* Typography Adjustments */
+  .admin-header h1 {
+    font-size: 24px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Small mobile devices */
+
+  /* Admin Padding */
+  main {
+    padding: 20px 16px !important;
+  }
+
+  header {
+    padding: 0 16px !important;
+  }
+
+  /* Hide text labels on buttons in header */
+  header button {
+    padding: 8px !important;
+  }
+
+  header button div {
+    display: none;
+    /* Text inside buttons */
+  }
+
+  /* Login/Signup Page Responsive */
+  .login-page {
+    padding: 16px !important;
+  }
+
+  .login-card {
+    padding: 24px !important;
+  }
+
+  /* Ensure inputs don't overflow */
+  .login-input-wrapper {
+    width: 100%;
   }
 }
