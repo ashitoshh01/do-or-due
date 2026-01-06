@@ -259,3 +259,30 @@ export const onMessageListener = () =>
         });
     });
 
+// --- User Management ---
+
+export const subscribeToAllUsers = (callback) => {
+    // Query users sorted by joined date (createdAt)
+    const q = query(
+        collection(db, 'users'),
+        // orderBy('createdAt', 'desc') // Ensure index exists or fallback to client sort
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const users = snapshot.docs.map(doc => ({
+            userId: doc.id,
+            ...doc.data(),
+            joinedAt: doc.data().createdAt?.seconds ? doc.data().createdAt.seconds * 1000 : 0
+        }));
+
+        // Client-side sort to avoid index issues during dev
+        users.sort((a, b) => b.joinedAt - a.joinedAt);
+
+        callback(users);
+    }, (error) => {
+        console.error("Error subscribing to users:", error);
+        callback([]);
+    });
+};
+
+

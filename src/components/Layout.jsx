@@ -183,7 +183,9 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                         <p style={{ fontWeight: 600, fontSize: '14px', color: 'hsl(var(--color-text-main))' }}>
                                             {userProfile.name || userProfile.email?.split('@')[0] || 'User'}
                                         </p>
-                                        <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))' }}>Pro Member</p>
+                                        <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))' }}>
+                                            {userProfile.plan ? userProfile.plan.charAt(0).toUpperCase() + userProfile.plan.slice(1) + ' Member' : 'Member'}
+                                        </p>
                                     </div>
 
                                     <DropdownItem onClick={() => { onNavigate('dashboard'); setShowUserMenu(false); }} icon={<Shield size={16} />} label="Dashboard" />

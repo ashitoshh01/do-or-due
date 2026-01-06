@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, Maximize2, Calendar, User, DollarSign, AlertTriangle, ZoomIn, ZoomOut, FileText, Video, Music, File, ExternalLink, Download } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
@@ -88,6 +88,14 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
     const [imageModal, setImageModal] = useState(false);
     const [zoom, setZoom] = useState(1);
 
+    // Responsive State
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Detect file type
     const fileType = useMemo(() => {
         const type = getFileType(task?.proofUrl);
@@ -109,9 +117,28 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
 
     return (
         <>
-            <div className="animate-in" style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '32px' }}>
+            <div className="animate-in" style={{
+                display: 'flex',
+                gap: isMobile ? '24px' : '32px',
+                flexDirection: isMobile ? 'column' : 'row',
+                height: isMobile ? 'auto' : 'calc(100vh - 140px)',
+                paddingBottom: isMobile ? '40px' : '0'
+            }}>
                 {/* LEFT: Proof Viewer - Handles multiple file types */}
-                <div style={{ flex: '1.2', background: '#0F172A', borderRadius: '24px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                <div style={{
+                    flex: isMobile ? 'none' : '1.2',
+                    height: isMobile ? '50vh' : 'auto',
+                    minHeight: isMobile ? '400px' : '0',
+                    width: '100%',
+                    background: '#0F172A',
+                    borderRadius: '24px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column'
+                }}>
                     {task.proofUrl ? (
                         <>
                             {/* Image */}

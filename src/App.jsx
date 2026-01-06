@@ -69,6 +69,32 @@ function MainApp() {
     }
   }, [currentUser, isAdmin]);
 
+  // 1b. Global Expiration Check (Fix for missing deadlines)
+  useEffect(() => {
+    if (!tasks || tasks.length === 0 || !currentUser) return;
+
+    const checkExpiration = () => {
+      const now = new Date();
+      tasks.forEach(task => {
+        if (task.status === 'pending' && task.deadline) {
+          const deadlineDate = task.deadline.toDate ? task.deadline.toDate() : new Date(task.deadline);
+          if (deadlineDate <= now) {
+            console.log(`Task ${task.id} expired. Auto-failing...`);
+            failTask(currentUser.uid, task.id);
+          }
+        }
+      });
+    };
+
+    // Run check immediately on load/change
+    checkExpiration();
+
+    // And periodically
+    const interval = setInterval(checkExpiration, 30000); // Check every 30s
+    return () => clearInterval(interval);
+
+  }, [tasks, currentUser]);
+
   // 3. Routing Logic (Basic URL handling)
   useEffect(() => {
     const path = window.location.pathname;
@@ -292,7 +318,7 @@ function MainApp() {
       case 'analytics':
         return <Analytics history={tasks} />;
       case 'plans':
-        return <Plans onShowPopup={(config) => setPopup({ isOpen: true, ...config })} />;
+        return <Plans userProfile={userProfile} onShowPopup={(config) => setPopup({ isOpen: true, ...config })} />;
       case 'result_success':
         return <TaskResult result="success" task={currentTask || { stake: 0 }} onHome={() => setAppView('dashboard')} />;
       case 'result_fail':
