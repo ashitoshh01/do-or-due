@@ -280,17 +280,19 @@ const AdminTaskDetail = ({ task, onBack, onApprove, onReject, processing }) => {
 
                         {/* Header Info */}
                         <div style={{ marginBottom: 'auto' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                                <div style={{ width: '48px', height: '48px', background: isDark ? '#334155' : '#F1F5F9', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800, color: subTextColor }}>
-                                    {task.userName?.charAt(0)}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 auto' }}>
+                                    <div style={{ width: '48px', height: '48px', background: isDark ? '#334155' : '#F1F5F9', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800, color: subTextColor, flexShrink: 0 }}>
+                                        {task.userName?.charAt(0)}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}> {/* minWidth 0 allows truncation if needed inside flex */}
+                                        <h2 style={{ fontSize: '18px', fontWeight: 800, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.userName}</h2>
+                                        <p style={{ fontSize: '13px', color: subTextColor }}>Task ID: {task.taskId.slice(0, 8)}...</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 style={{ fontSize: '18px', fontWeight: 800, color: textColor }}>{task.userName}</h2>
-                                    <p style={{ fontSize: '13px', color: subTextColor }}>Task ID: {task.taskId.slice(0, 8)}...</p>
-                                </div>
-                                <div style={{ marginLeft: 'auto', background: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FFF7ED', padding: '8px 16px', borderRadius: '12px', border: isDark ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #FFEDD5' }}>
+                                <div style={{ background: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FFF7ED', padding: '8px 16px', borderRadius: '12px', border: isDark ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid #FFEDD5', marginLeft: isMobile ? '0' : 'auto', width: isMobile ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#D97706', fontWeight: 700 }}>Stake Amount</div>
-                                    <div style={{ fontSize: '20px', fontWeight: 800, color: '#B45309' }}>₹{task.stake}</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 800, color: '#B45309', marginLeft: '12px' }}>₹{task.stake}</div>
                                 </div>
                             </div>
 

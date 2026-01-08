@@ -198,14 +198,14 @@ const ProofVerification = ({ onLogout }) => {
                 boxShadow: isDark ? '0 1px 2px 0 rgba(0, 0, 0, 0.2)' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
                 position: 'sticky', top: 0, zIndex: 50, transition: 'background-color 0.3s'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} onClick={handleBackToHome}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }} onClick={handleBackToHome}>
                     <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, cursor: 'pointer' }}>D</div>
                     <div style={{ cursor: 'pointer' }}>
                         <div style={{ fontWeight: 800, fontSize: '18px', letterSpacing: '-0.02em', color: isDark ? '#F8FAFC' : '#0F172A' }}>Admin Portal</div>
-                        <div style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 500 }}>Global Verification Center</div>
+                        <div style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 500 }} className="hidden-mobile">Global Verification Center</div>
                     </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                         onClick={handleNavigateToUsers}
                         style={{
@@ -223,7 +223,7 @@ const ProofVerification = ({ onLogout }) => {
                             boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
                         }}
                     >
-                        <Coins size={16} /> Add Coins
+                        <Coins size={16} /> <span className="hidden-mobile">Add Coins</span>
                     </button>
                     <button
                         onClick={toggleTheme}
@@ -243,7 +243,7 @@ const ProofVerification = ({ onLogout }) => {
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
                     <button onClick={handleLogout} style={{ background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2', border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #FEE2E2', color: '#EF4444', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}>
-                        <LogOut size={14} /> Logout
+                        <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
                     </button>
                 </div>
             </header>

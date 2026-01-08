@@ -109,10 +109,12 @@ const LeaderboardRow = ({ user, rank, isCurrentUser }) => {
                 {user.email?.charAt(0).toUpperCase() || 'U'}
             </div>
 
-            <div className="row-info">
+            <div className="row-info" style={{ minWidth: 0 }}>
                 <div className="row-name">
-                    {user.name || user.email.split('@')[0]}
-                    {isCurrentUser && <span className="you-tag">YOU</span>}
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.name || user.email.split('@')[0]}
+                    </span>
+                    {isCurrentUser && <span className="you-tag" style={{ flexShrink: 0 }}>YOU</span>}
                 </div>
                 <div className="row-streak">
                     <Flame size={12} fill="currentColor" className="text-orange-500" />

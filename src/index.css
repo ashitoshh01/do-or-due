@@ -360,6 +360,17 @@ body {
   h1 {
     font-size: 24px !important;
   }
+
+  /* Responsive Padding */
+  .card,
+  .modal-content {
+    padding: 16px !important;
+  }
+}
+
+.modal-sm {
+  max-width: 420px;
+  width: 100%;
 }
 
 /* Ensure bottom navbar is hidden on desktop */
@@ -595,12 +606,15 @@ body {
   flex: 1;
 }
 
-.row-name {
-  font-weight: 600;
-  color: hsl(var(--color-text-main));
-  display: flex;
-  align-items: center;
-  gap: 8px;
+@media (max-width: 768px) {
+  .admin-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .admin-search-input {
+    width: 100% !important;
+  }
 }
 
 .you-tag {
@@ -641,6 +655,22 @@ body {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-in-slide-right {
+  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes float {

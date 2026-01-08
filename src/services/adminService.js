@@ -16,6 +16,7 @@ import {
     setDoc,
     onSnapshot
 } from "firebase/firestore";
+import { checkPlanExpiration } from "./dbService";
 
 // --- Admin Auth ---
 // --- Admin Auth ---
@@ -269,11 +270,19 @@ export const subscribeToAllUsers = (callback) => {
     );
 
     return onSnapshot(q, (snapshot) => {
-        const users = snapshot.docs.map(doc => ({
-            userId: doc.id,
-            ...doc.data(),
-            joinedAt: doc.data().createdAt?.seconds ? doc.data().createdAt.seconds * 1000 : 0
-        }));
+        const users = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const userData = {
+                userId: doc.id,
+                ...data,
+                joinedAt: data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0
+            };
+
+            // Check for expiration
+            checkPlanExpiration(userData, doc.id);
+
+            return userData;
+        });
 
         // Client-side sort to avoid index issues during dev
         users.sort((a, b) => b.joinedAt - a.joinedAt);

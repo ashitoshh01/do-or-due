@@ -40,11 +40,38 @@ export const createUserProfile = async (userId, email, name = null) => {
     }
 };
 
+export const checkPlanExpiration = async (userData, userId) => {
+    if (userData.plan !== 'base' && userData.planExpiresAt) {
+        let expireTime;
+        // Handle Firestore Timestamp or Date object or numeric
+        if (userData.planExpiresAt.seconds) {
+            expireTime = userData.planExpiresAt.seconds * 1000;
+        } else if (userData.planExpiresAt instanceof Date) {
+            expireTime = userData.planExpiresAt.getTime();
+        } else {
+            expireTime = new Date(userData.planExpiresAt).getTime();
+        }
+
+        if (Date.now() > expireTime) {
+            console.log(`User ${userId} plan expired. Reverting to base.`);
+            await updateUserProfile(userId, {
+                plan: 'base',
+                planExpiresAt: null
+            });
+            return true;
+        }
+    }
+    return false;
+};
+
 export const subscribeToUser = (userId, callback) => {
     const userRef = doc(db, "users", userId);
-    return onSnapshot(userRef, (doc) => {
-        if (doc.exists()) {
-            callback(doc.data());
+    return onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Check for expiration (async, will trigger update if needed)
+            checkPlanExpiration(data, docSnap.id);
+            callback(data);
         }
     }, (error) => {
         console.error("Error subscribing to user profile:", error);

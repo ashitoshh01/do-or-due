@@ -150,7 +150,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
             {/* Stats Row - Responsive Grid */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                 gap: '16px',
                 marginBottom: '40px'
             }}>
@@ -159,7 +159,8 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                         <div style={{
                             width: '48px', height: '48px', borderRadius: '12px',
                             backgroundColor: stat.color === 'orange' ? '#FFF7ED' : stat.color === 'blue' ? '#EFF6FF' : stat.color === 'green' ? '#F0FDF4' : '#FEF2F2',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0
                         }}>
                             {/* Simple Icon Logic */}
                             {stat.icon === 'coins' && <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid orange' }} />}
@@ -167,9 +168,9 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                             {stat.icon === 'check' && <Check size={20} color="#22C55E" />}
                             {stat.icon === 'trend' && <TrendingUp size={20} color="#EF4444" />}
                         </div>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))', fontWeight: 500 }}>{stat.label}</div>
-                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{stat.value}</div>
+                            <div style={{ fontSize: '24px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stat.value}</div>
                         </div>
                     </div>
                 ))}
@@ -299,7 +300,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>Your Tasks</h2>
-                        <div style={{ backgroundColor: 'hsl(var(--color-bg-input))', padding: '4px', borderRadius: '8px', display: 'flex', gap: '4px', border: '1px solid hsl(var(--color-border))' }}>
+                        <div style={{ backgroundColor: 'hsl(var(--color-bg-input))', padding: '4px', borderRadius: '8px', display: 'flex', gap: '4px', border: '1px solid hsl(var(--color-border))', overflowX: 'auto', maxWidth: '100%', scrollbarWidth: 'none' }}>
                             <button onClick={() => setFilter('all')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'all' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: filter === 'all' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', transition: 'all 0.2s' }}>All</button>
                             <button onClick={() => setFilter('active')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'active' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'active' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'active' ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>Active</button>
                             <button onClick={() => setFilter('review')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: filter === 'review' ? 'hsl(var(--color-bg-card))' : 'transparent', boxShadow: filter === 'review' ? 'var(--shadow-sm)' : 'none', fontSize: '12px', fontWeight: 600, color: filter === 'review' ? '#3B82F6' : 'hsl(var(--color-text-secondary))', cursor: 'pointer', transition: 'all 0.2s' }}>In Review</button>

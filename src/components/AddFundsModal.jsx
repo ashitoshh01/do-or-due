@@ -44,7 +44,7 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
 
     return (
         <div className="modal-overlay" onClick={isVerifying ? null : onClose}>
-            <div className="modal-content animate-in" style={{ maxWidth: '420px', padding: '28px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content modal-sm animate-in" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

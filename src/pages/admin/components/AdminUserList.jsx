@@ -126,7 +126,7 @@ const AdminUserList = ({ onBack }) => {
     return (
         <div className="animate-in" style={{ paddingBottom: '40px' }}>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+            <div className="admin-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button
                         onClick={onBack}
@@ -141,7 +141,7 @@ const AdminUserList = ({ onBack }) => {
                 </div>
 
                 {/* Search */}
-                <div style={{ position: 'relative', width: '300px' }}>
+                <div className="admin-search-input" style={{ position: 'relative', width: '300px' }}>
                     <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: subTextColor }} />
                     <input
                         type="text"
@@ -154,11 +154,11 @@ const AdminUserList = ({ onBack }) => {
             </div>
 
             {/* Table */}
-            <div style={{ background: cardBg, borderRadius: '24px', overflow: 'hidden', border: `1px solid ${borderColor}` }}>
+            <div style={{ background: cardBg, borderRadius: '24px', overflow: 'hidden', border: `1px solid ${borderColor}`, overflowX: 'auto' }}>
                 {loading ? (
                     <div style={{ padding: '40px', textAlign: 'center', color: subTextColor }}>Loading Users...</div>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
                         <thead>
                             <tr style={{ borderBottom: `1px solid ${borderColor}`, textAlign: 'left' }}>
                                 <th style={{ padding: '20px', color: subTextColor, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>User</th>
