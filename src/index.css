@@ -153,17 +153,19 @@ body {
 }
 
 .btn-primary {
-  background-color: hsl(var(--color-text-secondary));
-  /* Muted Grey default per screenshot "Stake 0" */
+  background-color: hsl(var(--color-accent-blue));
   color: white;
+  border: 1px solid transparent;
 }
 
 .btn-primary:hover {
-  background-color: hsl(var(--color-text-main));
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px hsla(var(--color-accent-blue), 0.5);
 }
 
 .btn-primary.active {
-  background-color: hsl(var(--color-text-main));
+  background-color: hsl(var(--color-accent-blue));
+  filter: brightness(0.9);
 }
 
 .input-field {
