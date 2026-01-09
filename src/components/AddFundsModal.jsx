@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Copy } from 'lucide-react';
-import { PaymentQR } from '../assets'; // Assuming setup or direct path
 // Directly using the image path from public folder
 const PAYMENT_QR_PATH = '/payment-qr.png';
+
 
 const AddFundsModal = ({ onClose, userEmail, userName, amount: initialAmount }) => {
     const [amount, setAmount] = useState('100');
