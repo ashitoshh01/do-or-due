@@ -220,6 +220,8 @@ function MainApp() {
     setShowFundsModal(true);
   };
 
+  // ... (manual payment handler is technically unused now, but keeping for reference)
+
   const handlePaymentProceed = async (amount, utr) => {
     setShowFundsModal(false);
 
@@ -357,8 +359,9 @@ function MainApp() {
       {showFundsModal && (
         <AddFundsModal
           onClose={() => setShowFundsModal(false)}
-          onProceed={handlePaymentProceed}
-          balance={userProfile.balance}
+          userEmail={currentUser?.email}
+          userName={userProfile?.name || currentUser?.displayName}
+          amount={0}
         />
       )}
 

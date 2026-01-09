@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Copy } from 'lucide-react';
-import QRCode from "react-qr-code";
+import { PaymentQR } from '../assets'; // Assuming setup or direct path
+// Directly using the image path from public folder
+const PAYMENT_QR_PATH = '/payment-qr.png';
 
-const AddFundsModal = ({ onClose, onProceed, balance }) => {
+const AddFundsModal = ({ onClose, userEmail, userName, amount: initialAmount }) => {
     const [amount, setAmount] = useState('100');
-    const [utr, setUtr] = useState('');
     const [step, setStep] = useState(1); // 1: Select Amount, 2: Scan & Verify
 
-    // Clean up Amount on step 1 change
-    useEffect(() => {
-        if (step === 1) setUtr('');
-    }, [step]);
+
 
     // ESC key listener
     useEffect(() => {
@@ -21,25 +19,16 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
         return () => document.removeEventListener('keydown', handleEscKey);
     }, [onClose]);
 
-    const upiId = "rajshinde153909n@okicici";
-    const payeeName = "Do Or Due";
-    const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+    const handleWhatsAppRedirect = () => {
+        const message = `Hello, i am ${userName || 'User'}
+I want to add dur coins ${amount} in my account email : ${userEmail} .
+NOTE : please attach the screenshot of the payment done.`;
 
-    const [isVerifying, setIsVerifying] = useState(false);
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/919518352166?text=${encodedMessage}`;
 
-    const handleVerifyAndProceed = async () => {
-        if (utr.length !== 12) {
-            alert("Please enter a valid 12-digit UTR.");
-            return;
-        }
-
-        setIsVerifying(true);
-
-        // Simulate "Banking Network" delay
-        setTimeout(() => {
-            onProceed(parseInt(amount), utr);
-            // Note: We don't set verifying false here because the parent closes the modal
-        }, 1000);
+        window.open(whatsappUrl, '_blank');
+        onClose();
     };
 
     return (
@@ -49,13 +38,11 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>
-                        {step === 1 ? 'Add Funds' : 'Scan & Pay'}
+                        {step === 1 ? 'Add Funds' : 'Scan & Verify'}
                     </h2>
-                    {!isVerifying && (
-                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                            <X size={24} color="hsl(var(--color-text-secondary))" />
-                        </button>
-                    )}
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                        <X size={24} color="hsl(var(--color-text-secondary))" />
+                    </button>
                 </div>
 
                 {step === 1 ? (
@@ -101,7 +88,6 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                         </button>
                     </div>
                 ) : (
-                    // STEP 2: SCAN & ENTER UTR
                     <div style={{ textAlign: 'center' }}>
                         <div style={{
                             background: 'white', padding: '20px', borderRadius: '16px',
@@ -109,7 +95,11 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                             border: '1px solid #E2E8F0'
                         }}>
-                            <QRCode value={upiLink} size={180} />
+                            <img
+                                src={PAYMENT_QR_PATH}
+                                alt="Payment QR Code"
+                                style={{ width: '180px', height: '180px', objectFit: 'contain' }}
+                            />
                             <div style={{ marginTop: '12px', fontSize: '10px', color: '#64748B', fontWeight: 600, letterSpacing: '0.5px' }}>
                                 SCAN WITH ANY UPI APP
                             </div>
@@ -121,12 +111,11 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                                 <span style={{ fontFamily: 'monospace', fontSize: '15px', fontWeight: 600, color: 'hsl(var(--color-text-main))' }}>
-                                    {upiId}
+                                    9518352166@axl
                                 </span>
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText(upiId);
-                                        // Visual feedback could be added here if we had a toast system, for now the icon click is enough
+                                        navigator.clipboard.writeText('9518352166@axl');
                                     }}
                                     style={{
                                         border: 'none', background: 'hsl(var(--color-primary))', color: 'white',
@@ -139,59 +128,29 @@ const AddFundsModal = ({ onClose, onProceed, balance }) => {
                             </div>
                         </div>
 
-                        <div style={{ textAlign: 'left', marginBottom: '24px' }}>
-                            <label style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', display: 'block', color: 'hsl(var(--color-text-main))' }}>
-                                Enter Payment Reference ID (UTR)
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="e.g. 3089xxxxxxxx"
-                                maxLength={12}
-                                value={utr}
-                                onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))} // Only numbers
-                                disabled={isVerifying}
-                                className="input-field"
-                                style={{
-                                    width: '100%', padding: '14px', fontSize: '16px', letterSpacing: '1px',
-                                    textAlign: 'center', fontWeight: 600,
-                                    opacity: isVerifying ? 0.5 : 1
-                                }}
-                            />
-                            <div style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginTop: '6px', lineHeight: '1.4' }}>
-                                Check your GPay/PhonePe history for the 12-digit <strong>UTR</strong> or <strong>UPI Ref ID</strong>.
-                            </div>
+                        <div style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))', marginBottom: '20px', lineHeight: '1.5', background: 'hsl(var(--color-bg-input))', padding: '10px', borderRadius: '8px' }}>
+                            <strong>Step 1:</strong> Scan QR and pay <strong>₹{amount}</strong>.<br />
+                            <strong>Step 2:</strong> Click below to verify on WhatsApp (Attach Screenshot).
                         </div>
 
                         <button
                             className="btn btn-primary"
                             style={{
                                 width: '100%', padding: '16px', borderRadius: '12px',
-                                opacity: utr.length === 12 && !isVerifying ? 1 : 0.6,
-                                cursor: utr.length === 12 && !isVerifying ? 'pointer' : 'not-allowed',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                fontSize: '15px', marginTop: '8px'
+                                fontSize: '15px', marginTop: '8px',
+                                background: '#25D366', // WhatsApp Green
+                                border: 'none'
                             }}
-                            disabled={utr.length !== 12 || isVerifying}
-                            onClick={handleVerifyAndProceed}
+                            onClick={handleWhatsAppRedirect}
                         >
-                            {isVerifying ? (
-                                <>
-                                    <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-                                    Verifying Payment...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle size={18} />
-                                    Verify & Add ₹{amount}
-                                </>
-                            )}
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="20" height="20" alt="WA" />
+                            Verify Payment on WhatsApp
                         </button>
 
-                        {!isVerifying && (
-                            <button onClick={() => setStep(1)} style={{ marginTop: '16px', background: 'none', border: 'none', color: 'hsl(var(--color-text-secondary))', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
-                                ← Change Amount
-                            </button>
-                        )}
+                        <button onClick={() => setStep(1)} style={{ marginTop: '16px', background: 'none', border: 'none', color: 'hsl(var(--color-text-secondary))', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
+                            ← Change Amount
+                        </button>
                     </div>
                 )}
 
