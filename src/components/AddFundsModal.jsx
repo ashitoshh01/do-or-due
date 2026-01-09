@@ -32,7 +32,7 @@ NOTE : please attach the screenshot of the payment done.`;
     };
 
     return (
-        <div className="modal-overlay" onClick={isVerifying ? null : onClose}>
+        <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content modal-sm animate-in" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
