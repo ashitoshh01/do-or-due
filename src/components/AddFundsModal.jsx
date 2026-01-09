@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Copy } from 'lucide-react';
-// Directly using the image path from public folder
-const PAYMENT_QR_PATH = '/payment-qr.png';
+import QRCode from "react-qr-code";
 
 
 const AddFundsModal = ({ onClose, userEmail, userName, amount: initialAmount }) => {
@@ -18,6 +17,12 @@ const AddFundsModal = ({ onClose, userEmail, userName, amount: initialAmount }) 
         document.addEventListener('keydown', handleEscKey);
         return () => document.removeEventListener('keydown', handleEscKey);
     }, [onClose]);
+
+    // Dynamic UPI Link Generation
+    const upiId = "9518352166@axl";
+    const payeeName = "DoOrDue";
+    // Construct UPI URI with amount
+    const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
 
     const handleWhatsAppRedirect = () => {
         const message = `Hello, I am ${userName || 'User'} .
@@ -96,11 +101,9 @@ NOTE : Please attach the screenshot of the payment done.`;
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                             border: '1px solid #E2E8F0'
                         }}>
-                            <img
-                                src={PAYMENT_QR_PATH}
-                                alt="Payment QR Code"
-                                style={{ width: '180px', height: '180px', objectFit: 'contain' }}
-                            />
+                            <div style={{ background: 'white', padding: '16px', borderRadius: '8px' }}>
+                                <QRCode value={upiLink} size={180} />
+                            </div>
                             <div style={{ marginTop: '12px', fontSize: '10px', color: '#64748B', fontWeight: 600, letterSpacing: '0.5px' }}>
                                 SCAN WITH ANY UPI APP
                             </div>
