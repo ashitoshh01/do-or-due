@@ -213,70 +213,71 @@ const ProofVerification = ({ onLogout }) => {
                         <div style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 500 }} className="hidden-mobile">Global Verification Center</div>
                     </div>
                 </div>
-                <button
-                    onClick={handleNavigateToFeedbacks}
-                    style={{
-                        background: isDark ? '#334155' : 'white',
-                        border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`,
-                        color: isDark ? '#F8FAFC' : '#64748B',
-                        padding: '10px 16px',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontWeight: 600,
-                        fontSize: '13px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <MessageSquare size={16} /> <span className="hidden-mobile">Feedback</span>
-                </button>
-                <button
-                    onClick={handleNavigateToUsers}
-                    style={{
-                        background: '#F59E0B',
-                        border: 'none',
-                        color: 'white',
-                        padding: '10px 16px',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
-                    }}
-                >
-                    <Coins size={16} /> <span className="hidden-mobile">Add Coins</span>
-                </button>
-                <button
-                    onClick={toggleTheme}
-                    style={{
-                        background: isDark ? '#334155' : '#F1F5F9',
-                        border: 'none',
-                        color: isDark ? '#FCD34D' : '#64748B',
-                        padding: '10px',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                <button onClick={handleLogout} style={{ background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2', border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #FEE2E2', color: '#EF4444', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}>
-                    <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
-                </button>
-        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        onClick={handleNavigateToFeedbacks}
+                        style={{
+                            background: isDark ? '#334155' : 'white',
+                            border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`,
+                            color: isDark ? '#F8FAFC' : '#64748B',
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <MessageSquare size={16} /> <span className="hidden-mobile">Feedback</span>
+                    </button>
+                    <button
+                        onClick={handleNavigateToUsers}
+                        style={{
+                            background: '#F59E0B',
+                            border: 'none',
+                            color: 'white',
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
+                        }}
+                    >
+                        <Coins size={16} /> <span className="hidden-mobile">Add Coins</span>
+                    </button>
+                    <button
+                        onClick={toggleTheme}
+                        style={{
+                            background: isDark ? '#334155' : '#F1F5F9',
+                            border: 'none',
+                            color: isDark ? '#FCD34D' : '#64748B',
+                            padding: '10px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <button onClick={handleLogout} style={{ background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2', border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #FEE2E2', color: '#EF4444', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}>
+                        <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
+                    </button>
+                </div>
             </header >
 
-    {/* Main Area */ }
-    < main style = {{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
-        { renderContent() }
+            {/* Main Area */}
+            < main style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
+                {renderContent()}
 
 
             </main >
