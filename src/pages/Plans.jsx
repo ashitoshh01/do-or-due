@@ -51,7 +51,7 @@ const Plans = ({ onShowPopup, userProfile }) => {
             id: 'elite',
             name: 'Elite',
             subtitle: 'Maximum Power & Perks',
-            price: '₹499',
+            price: '₹199',
             period: '/month',
             savings: 'Includes Priority Support',
             description: 'For power users',
