@@ -6,6 +6,18 @@ import { updateUserProfile, submitFeedback } from '../services/dbService';
 import AvatarWithEdit from '../components/AvatarWithEdit';
 import { CHARITIES } from '../constants/charities';
 
+const ContentWrapper = ({ children, title, onBack }) => (
+    <div className="content-wrapper">
+        <div className="mobile-header">
+            <button onClick={onBack} className="back-btn">
+                <ArrowLeft size={20} />
+            </button>
+            <h2>{title}</h2>
+        </div>
+        {children}
+    </div>
+);
+
 const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     const { currentUser, logout, updateUserPassword, deleteUserAccount } = useAuth();
     const { isDark, toggleTheme } = useTheme();
@@ -167,18 +179,6 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     };
 
     const renderContent = () => {
-        // Content wrapper with back button for mobile
-        const ContentWrapper = ({ children, title }) => (
-            <div className="content-wrapper">
-                <div className="mobile-header">
-                    <button onClick={handleBackToMenu} className="back-btn">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2>{title}</h2>
-                </div>
-                {children}
-            </div>
-        );
 
         let content = null;
         let title = '';
@@ -442,7 +442,7 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
         }
 
         return (
-            <ContentWrapper title={title}>
+            <ContentWrapper title={title} onBack={handleBackToMenu}>
                 <div key={activeTab} className="animate-in">
                     {content}
                 </div>
