@@ -20,9 +20,10 @@ const AddFundsModal = ({ onClose, userEmail, userName, amount: initialAmount }) 
     }, [onClose]);
 
     const handleWhatsAppRedirect = () => {
-        const message = `Hello, i am ${userName || 'User'}
-I want to add dur coins ${amount} in my account email : ${userEmail} .
-NOTE : please attach the screenshot of the payment done.`;
+        const message = `Hello, I am ${userName || 'User'} .
+I want to add due coins ${amount} in my account email : ${userEmail} .
+
+NOTE : Please attach the screenshot of the payment done.`;
 
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/919518352166?text=${encodedMessage}`;
