@@ -48,13 +48,13 @@ const Popup = ({ isOpen, onClose, title, message, type = 'info', confirmButton, 
     const getBackgroundColor = () => {
         switch (type) {
             case 'success':
-                return '#F0FDF4';
+                return 'rgba(34, 197, 94, 0.1)'; // Green tint
             case 'error':
-                return '#FEF2F2';
+                return 'rgba(239, 68, 68, 0.1)'; // Red tint
             case 'warning':
-                return '#FFF7ED';
+                return 'rgba(245, 158, 11, 0.1)'; // Amber tint
             default:
-                return '#EFF6FF';
+                return 'rgba(59, 130, 246, 0.1)'; // Blue tint
         }
     };
 
