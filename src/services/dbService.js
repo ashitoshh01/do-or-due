@@ -11,7 +11,8 @@ import {
     setDoc,
     getDoc,
     orderBy,
-    increment
+    increment,
+    serverTimestamp
 } from "firebase/firestore";
 
 // --- User Operations ---
@@ -271,4 +272,38 @@ export const triggerNotificationApi = async (taskData) => {
     } catch (error) {
         console.error("Failed to trigger notification API:", error);
     }
+};
+
+// --- Feedback Operations ---
+
+export const submitFeedback = async (userId, userEmail, title, description) => {
+    try {
+        await addDoc(collection(db, "feedbacks"), {
+            userId,
+            userEmail,
+            title,
+            description,
+            createdAt: serverTimestamp(),
+            status: 'unread' // unread, read
+        });
+        return true;
+    } catch (error) {
+        console.error("Error submitting feedback:", error);
+        throw error;
+    }
+};
+
+export const subscribeToFeedbacks = (callback) => {
+    const q = query(
+        collection(db, "feedbacks"),
+        orderBy("createdAt", "desc")
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const feedbacks = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        callback(feedbacks);
+    });
 };

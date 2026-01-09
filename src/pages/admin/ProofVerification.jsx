@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { subscribeToAdminTasks, approveProof, rejectProof, adminLogout, requestNotificationPermission, onMessageListener } from '../../services/adminService';
 import { saveAdminToken } from '../../services/dbService';
-import { LogOut, RefreshCw, Moon, Sun } from 'lucide-react';
+import { LogOut, RefreshCw, Moon, Sun, Coins, MessageSquare } from 'lucide-react';
 import Popup from '../../components/Popup';
 import AdminDashboardHome from './components/AdminDashboardHome';
 import AdminTaskList from './components/AdminTaskList';
 import AdminTaskDetail from './components/AdminTaskDetail';
-import AdminUserList from './components/AdminUserList'; // Import new component
+import AdminUserList from './components/AdminUserList';
+import AdminFeedbackList from './components/AdminFeedbackList';
 import { useTheme } from '../../context/ThemeContext';
-import { Coins } from 'lucide-react'; // Import Coins icon
+
 
 const ProofVerification = ({ onLogout }) => {
     // Theme Hook
@@ -132,6 +133,11 @@ const ProofVerification = ({ onLogout }) => {
         setSelectedCategory(null);
     };
 
+    const handleNavigateToFeedbacks = () => {
+        setViewMode('feedbacks');
+        setSelectedCategory(null);
+    };
+
     // --- Rendering ---
 
     // Derived Categorized Lists
@@ -184,6 +190,8 @@ const ProofVerification = ({ onLogout }) => {
                 />;
             case 'users':
                 return <AdminUserList onBack={handleBackToHome} />;
+            case 'feedbacks':
+                return <AdminFeedbackList onBack={handleBackToHome} />;
             default:
                 return <div>Unknown View</div>;
         }
@@ -205,55 +213,73 @@ const ProofVerification = ({ onLogout }) => {
                         <div style={{ fontSize: '12px', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 500 }} className="hidden-mobile">Global Verification Center</div>
                     </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                        onClick={handleNavigateToUsers}
-                        style={{
-                            background: '#F59E0B',
-                            border: 'none',
-                            color: 'white',
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontWeight: 700,
-                            fontSize: '13px',
-                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
-                        }}
-                    >
-                        <Coins size={16} /> <span className="hidden-mobile">Add Coins</span>
-                    </button>
-                    <button
-                        onClick={toggleTheme}
-                        style={{
-                            background: isDark ? '#334155' : '#F1F5F9',
-                            border: 'none',
-                            color: isDark ? '#FCD34D' : '#64748B',
-                            padding: '10px',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
-                    <button onClick={handleLogout} style={{ background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2', border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #FEE2E2', color: '#EF4444', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}>
-                        <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
-                    </button>
-                </div>
-            </header>
+                <button
+                    onClick={handleNavigateToFeedbacks}
+                    style={{
+                        background: isDark ? '#334155' : 'white',
+                        border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`,
+                        color: isDark ? '#F8FAFC' : '#64748B',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    <MessageSquare size={16} /> <span className="hidden-mobile">Feedback</span>
+                </button>
+                <button
+                    onClick={handleNavigateToUsers}
+                    style={{
+                        background: '#F59E0B',
+                        border: 'none',
+                        color: 'white',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
+                    }}
+                >
+                    <Coins size={16} /> <span className="hidden-mobile">Add Coins</span>
+                </button>
+                <button
+                    onClick={toggleTheme}
+                    style={{
+                        background: isDark ? '#334155' : '#F1F5F9',
+                        border: 'none',
+                        color: isDark ? '#FCD34D' : '#64748B',
+                        padding: '10px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                <button onClick={handleLogout} style={{ background: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2', border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #FEE2E2', color: '#EF4444', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}>
+                    <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
+                </button>
+        </div>
+            </header >
 
-            {/* Main Area */}
-            <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
-                {renderContent()}
+    {/* Main Area */ }
+    < main style = {{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
+        { renderContent() }
 
 
-            </main>
+            </main >
 
             <Popup
                 isOpen={popup.isOpen}
@@ -269,7 +295,7 @@ const ProofVerification = ({ onLogout }) => {
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 .animate-in { animation: fadeIn 0.4s ease-out forwards; }
             `}</style>
-        </div>
+        </div >
     );
 };
 
