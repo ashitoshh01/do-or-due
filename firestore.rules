@@ -34,5 +34,11 @@ service cloud.firestore {
     match /admin_tokens/{token} {
       allow read, write: if isAdmin();
     }
+
+    // Allow users to submit feedback, Admin to read/manage
+    match /feedbacks/{feedbackId} {
+      allow create: if request.auth != null;
+      allow read, write: if isAdmin();
+    }
   }
 }
