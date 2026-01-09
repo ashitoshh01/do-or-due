@@ -233,8 +233,8 @@ const Plans = ({ onShowPopup, userProfile }) => {
                                 }}
                                 disabled={!isHigher}
                                 onClick={() => isHigher && onShowPopup && onShowPopup({
-                                    title: 'Upgrade Request',
-                                    message: `You are requesting to upgrade to ${plan.name}. Please contact admin or proceed to payment.`,
+                                    title: 'Coming Soon',
+                                    message: 'Plans are yet to be introduced and will be introduced soon.',
                                     type: 'info'
                                 })}
                             >
