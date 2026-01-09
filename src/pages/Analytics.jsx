@@ -1,24 +1,25 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { TrendingUp, Calendar, Target, Award } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const Analytics = ({ history }) => {
     const { isDark } = useTheme();
+    const [activeLayer, setActiveLayer] = useState('all');
 
     // Color schemes
     const chartColors = {
-        primary: '#3B82F6',
-        success: '#22C55E',
+        primary: '#3B82F6', // Blue for Created
+        success: '#22C55E', // Green for Completed
+        danger: '#EF4444',  // Red for Failed
         warning: '#F59E0B',
-        danger: '#EF4444',
         info: '#8B5CF6'
     };
 
     // Task Distribution Data for Pie Chart
     const taskDistribution = useMemo(() => {
         const total = history.length;
-        const pending = history.filter(t => t.status === 'pending').length;
+        const pending = history.filter(t => t.status === 'pending' || t.status === 'pending_review').length;
         const completed = history.filter(t => t.status === 'success').length;
         const failed = history.filter(t => t.status === 'failed').length;
 
@@ -48,35 +49,37 @@ const Analytics = ({ history }) => {
         }));
     }, [history]);
 
-    // Productivity Analysis (tasks created and completed TODAY only)
+    // Productivity Analysis (Aggregated 24-Hour Pattern)
     const productivityData = useMemo(() => {
-        const hourCounts = Array(24).fill(0).map((_, i) => ({ hour: i, created: 0, completed: 0 }));
-        const today = new Date();
-        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-        const todayEnd = todayStart + 24 * 60 * 60 * 1000;
+        const hourCounts = Array(24).fill(0).map((_, i) => ({ hour: i, created: 0, completed: 0, failed: 0 }));
 
         history.forEach(task => {
-            // Count tasks COMPLETED today (not created)
-            if (task.completedAt && task.status === 'success') {
-                const completedDate = task.completedAt.toDate ? task.completedAt.toDate() : new Date(task.completedAt);
-                const completedTime = completedDate.getTime();
-
-                // Only include if completed today
-                if (completedTime >= todayStart && completedTime < todayEnd) {
-                    const hour = completedDate.getHours();
+            // Count all completed tasks by hour
+            if (task.status === 'success') {
+                // Fallback to createdAt if completedAt is missing to ensuring it shows on graph
+                const dateRaw = task.completedAt || task.createdAt;
+                if (dateRaw) {
+                    const date = dateRaw.toDate ? dateRaw.toDate() : new Date(dateRaw);
+                    const hour = date.getHours();
                     hourCounts[hour].completed++;
                 }
             }
 
-            // Also track tasks created today for context
+            // Count all failed tasks by hour
+            if (task.status === 'failed') {
+                const dateRaw = task.completedAt || task.createdAt;
+                if (dateRaw) {
+                    const date = dateRaw.toDate ? dateRaw.toDate() : new Date(dateRaw);
+                    const hour = date.getHours();
+                    hourCounts[hour].failed++;
+                }
+            }
+
+            // Count all created tasks by hour
             if (task.createdAt) {
                 const createdDate = task.createdAt.toDate ? task.createdAt.toDate() : new Date(task.createdAt);
-                const createdTime = createdDate.getTime();
-
-                if (createdTime >= todayStart && createdTime < todayEnd) {
-                    const hour = createdDate.getHours();
-                    hourCounts[hour].created++;
-                }
+                const hour = createdDate.getHours();
+                hourCounts[hour].created++;
             }
         });
 
@@ -90,6 +93,7 @@ const Analytics = ({ history }) => {
     // Find peak productivity hour
     const peakHour = useMemo(() => {
         const maxCompleted = Math.max(...productivityData.map(d => d.completed));
+        if (maxCompleted === 0) return 'No data';
         const peak = productivityData.find(d => d.completed === maxCompleted);
         return peak ? `${peak.hour}:00 - ${peak.hour + 1}:00` : 'N/A';
     }, [productivityData]);
@@ -180,8 +184,15 @@ const Analytics = ({ history }) => {
                     </h2>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={tasksPerDay}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                            <XAxis dataKey="day" stroke={secondaryColor} />
+                            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                            <XAxis
+                                dataKey="day"
+                                stroke={secondaryColor}
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                                minTickGap={20}
+                            />
                             <YAxis stroke={secondaryColor} />
                             <Tooltip
                                 contentStyle={{
@@ -199,12 +210,49 @@ const Analytics = ({ history }) => {
 
             {/* Productivity Analysis - Full Width */}
             <div className="card" style={{ marginTop: '24px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', color: textColor }}>
-                    Today's Productivity (24-Hour Pattern)
-                </h2>
-                <p style={{ fontSize: '14px', color: secondaryColor, marginBottom: '16px' }}>
-                    Tasks created and completed today - identify your peak productivity hours
-                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
+                    <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 700, color: textColor }}>
+                            Productivity Pattern (24-Hour)
+                        </h2>
+                        <p style={{ fontSize: '14px', color: secondaryColor, marginTop: '4px' }}>
+                            Activity by hour of day (All time)
+                        </p>
+                    </div>
+
+                    {/* Activity Filter Controls */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                            { id: 'all', label: 'All Layers' },
+                            { id: 'created', label: 'Created', color: chartColors.primary },
+                            { id: 'completed', label: 'Completed', color: chartColors.success },
+                            { id: 'failed', label: 'Failed', color: chartColors.danger }
+                        ].map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setActiveLayer(opt.id)}
+                                style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    border: `1px solid ${activeLayer === opt.id ? (opt.color || textColor) : gridColor}`,
+                                    backgroundColor: activeLayer === opt.id ? (opt.color || textColor) : 'transparent',
+                                    color: activeLayer === opt.id ? '#FFF' : secondaryColor,
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                {opt.color && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeLayer === opt.id ? '#FFF' : opt.color }} />}
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <ResponsiveContainer width="100%" height={350}>
                     <AreaChart data={productivityData}>
                         <defs>
@@ -216,9 +264,20 @@ const Analytics = ({ history }) => {
                                 <stop offset="5%" stopColor={chartColors.success} stopOpacity={0.8} />
                                 <stop offset="95%" stopColor={chartColors.success} stopOpacity={0.1} />
                             </linearGradient>
+                            <linearGradient id="colorFailed" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={chartColors.danger} stopOpacity={0.8} />
+                                <stop offset="95%" stopColor={chartColors.danger} stopOpacity={0.1} />
+                            </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                        <XAxis dataKey="label" stroke={secondaryColor} interval={3} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                        <XAxis
+                            dataKey="label"
+                            stroke={secondaryColor}
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            minTickGap={30} // Prevent overlap
+                        />
                         <YAxis stroke={secondaryColor} />
                         <Tooltip
                             contentStyle={{
@@ -229,22 +288,37 @@ const Analytics = ({ history }) => {
                             }}
                         />
                         <Legend />
-                        <Area
-                            type="monotone"
-                            dataKey="created"
-                            stroke={chartColors.primary}
-                            fillOpacity={1}
-                            fill="url(#colorCreated)"
-                            name="Tasks Created"
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="completed"
-                            stroke={chartColors.success}
-                            fillOpacity={1}
-                            fill="url(#colorCompleted)"
-                            name="Tasks Completed"
-                        />
+
+                        {(activeLayer === 'all' || activeLayer === 'created') && (
+                            <Area
+                                type="monotone"
+                                dataKey="created"
+                                stroke={chartColors.primary}
+                                fillOpacity={1}
+                                fill="url(#colorCreated)"
+                                name="Created"
+                            />
+                        )}
+                        {(activeLayer === 'all' || activeLayer === 'completed') && (
+                            <Area
+                                type="monotone"
+                                dataKey="completed"
+                                stroke={chartColors.success}
+                                fillOpacity={1}
+                                fill="url(#colorCompleted)"
+                                name="Completed"
+                            />
+                        )}
+                        {(activeLayer === 'all' || activeLayer === 'failed') && (
+                            <Area
+                                type="monotone"
+                                dataKey="failed"
+                                stroke={chartColors.danger}
+                                fillOpacity={1}
+                                fill="url(#colorFailed)"
+                                name="Failed"
+                            />
+                        )}
                     </AreaChart>
                 </ResponsiveContainer>
             </div>

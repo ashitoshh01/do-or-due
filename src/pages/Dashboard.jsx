@@ -106,8 +106,26 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
         return true;
     });
 
+    // Sort locally to ensure latest is always on top (handling potential latency)
+    const sortedHistory = [...filteredHistory].sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA;
+    });
+
     const [showAllTasks, setShowAllTasks] = useState(false);
-    const displayedTasks = showAllTasks ? filteredHistory : filteredHistory.slice(0, 5);
+
+    // Logic: Always show ALL pending/active tasks. Only limit the "Done/Failed" history.
+    const activeTasks = sortedHistory.filter(t => t.status === 'pending' || t.status === 'pending_review');
+    const pastTasks = sortedHistory.filter(t => t.status !== 'pending' && t.status !== 'pending_review');
+
+    // If filter is 'all', show all active + limited past. If filter is specific, show all matching.
+    let displayedTasks;
+    if (filter === 'all') {
+        displayedTasks = [...activeTasks, ...(showAllTasks ? pastTasks : pastTasks.slice(0, 5))];
+    } else {
+        displayedTasks = showAllTasks ? sortedHistory : sortedHistory.slice(0, 10);
+    }
 
     const handleDonateClick = (task) => {
         if (userProfile?.defaultCharity) {

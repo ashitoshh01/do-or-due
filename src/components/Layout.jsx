@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Menu, X, Home } from 'lucide-react';
+import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { defaultAvatars } from '../data/defaultAvatars';
@@ -7,15 +7,13 @@ import { defaultAvatars } from '../data/defaultAvatars';
 const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showMobileMore, setShowMobileMore] = useState(false);
-    const [showMobileMenu, setShowMobileMenu] = useState(false); // Hamburger Menu State
     const [iconRotating, setIconRotating] = useState(false);
     const { logout } = useAuth();
     const { theme, toggleTheme, isDark } = useTheme();
     const dropdownRef = useRef(null);
     const mobileMoreRef = useRef(null);
-    const mobileMenuRef = useRef(null);
 
-    // Click outside detection for dropdowns and mobile menu
+    // Click outside detection for dropdowns
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -24,20 +22,16 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target)) {
                 setShowMobileMore(false);
             }
-            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
-                setShowMobileMenu(false);
-            }
         };
 
         const handleEscKey = (event) => {
             if (event.key === 'Escape') {
                 setShowUserMenu(false);
                 setShowMobileMore(false);
-                setShowMobileMenu(false);
             }
         };
 
-        if (showUserMenu || showMobileMore || showMobileMenu) {
+        if (showUserMenu || showMobileMore) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscKey);
         }
@@ -46,7 +40,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscKey);
         };
-    }, [showUserMenu, showMobileMore, showMobileMenu]);
+    }, [showUserMenu, showMobileMore]);
 
     const handleLogout = async () => {
         try {
@@ -64,7 +58,6 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
 
     const handleNavAndClose = (page) => {
         onNavigate(page);
-        setShowMobileMenu(false);
     };
 
     return (
@@ -225,10 +218,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             {/* --- MOBILE HEADER --- */}
             <div className="visible-mobile" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'hsl(var(--color-bg-card))', position: 'sticky', top: 0, zIndex: 40, borderBottom: `1px solid hsl(var(--color-border-light))` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Hamburger Button */}
-                    <button onClick={() => setShowMobileMenu(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'hsl(var(--color-text-main))' }}>
-                        <Menu size={24} />
-                    </button>
+                    {/* Hamburger Button Removed */}
                     <button onClick={() => onNavigate('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none' }}>
                         <Shield fill="hsl(var(--color-text-main))" size={20} color="hsl(var(--color-text-main))" />
                         <span style={{ fontWeight: 800, fontSize: '18px', color: 'hsl(var(--color-text-main))' }}>DoOrDue</span>
@@ -277,90 +267,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                 </div>
             </div>
 
-            {/* --- MOBILE MENU SIDE DRAWER --- */}
-            {showMobileMenu && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 2000 }}>
-                    {/* Backdrop */}
-                    <div
-                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
-                        onClick={() => setShowMobileMenu(false)}
-                    />
-
-                    {/* Drawer */}
-                    <div
-                        ref={mobileMenuRef}
-                        className="animate-in-slide-right"
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            width: '280px',
-                            maxWidth: '80%',
-                            backgroundColor: 'hsl(var(--color-bg-card))',
-                            boxShadow: 'var(--shadow-xl)',
-                            padding: '24px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '24px',
-                            transform: 'translateX(0)', // Animation handled by class
-                            transition: 'transform 0.3s ease'
-                        }}
-                    >
-                        {/* Close Button & Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'hsl(var(--color-text-main))' }}>Menu</h2>
-                            <button onClick={() => setShowMobileMenu(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* User Profile Summary */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '20px', borderBottom: '1px solid hsl(var(--color-border))' }}>
-                            <div style={{
-                                width: '48px', height: '48px', borderRadius: '50%',
-                                backgroundColor: 'hsl(var(--color-bg-input))',
-                                display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', fontWeight: 700, fontSize: '18px',
-                                color: 'hsl(var(--color-text-main))',
-                                overflow: 'hidden',
-                                border: `2px solid hsl(var(--color-border))`
-                            }}>
-                                {userProfile.avatar?.value ? (
-                                    <img src={userProfile.avatar.value} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                    (userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()
-                                )}
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>{userProfile.name || 'User'}</div>
-                                <div style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))' }}>{userProfile.email}</div>
-                            </div>
-                        </div>
-
-                        {/* Navigation Links */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <DropdownItem onClick={() => handleNavAndClose('dashboard')} icon={<Home size={20} />} label="Dashboard" />
-                            <DropdownItem onClick={() => handleNavAndClose('leaderboard')} icon={<Trophy size={20} />} label="Leaderboard" />
-                            <DropdownItem onClick={() => handleNavAndClose('analytics')} icon={<BarChart3 size={20} />} label="Analytics" />
-                            <DropdownItem onClick={() => handleNavAndClose('plans')} icon={<Zap size={20} />} label="Plans" />
-                            <DropdownItem onClick={() => handleNavAndClose('settings')} icon={<Settings size={20} />} label="Settings" />
-                        </div>
-
-                        {/* Footer / Logout */}
-                        <div style={{ marginTop: 'auto', borderTop: '1px solid hsl(var(--color-border))', paddingTop: '16px' }}>
-                            <button onClick={handleLogout} style={{
-                                display: 'flex', alignItems: 'center', gap: '12px',
-                                width: '100%', padding: '12px', borderRadius: '12px',
-                                border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer',
-                                fontSize: '15px', color: '#EF4444', fontWeight: 600, textAlign: 'left'
-                            }}>
-                                <LogOut size={18} /> Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* --- MOBILE MENU SIDE DRAWER REMOVED --- */}
 
 
             {/* Main Content Container */}

@@ -32,27 +32,27 @@ const TaskResult = ({ result, task, onHome }) => {
         }
 
         return (
-            <div className="animate-in" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsl(var(--color-bg-app))' }}>
-                <div className="card" style={{ width: '100%', maxWidth: '500px', textAlign: 'center', padding: '60px 40px', boxShadow: 'var(--shadow-float)' }}>
+            <div className="animate-in" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0FDF4' }}>
+                <div className="card" style={{ width: '100%', maxWidth: '500px', textAlign: 'center', padding: '60px 40px', boxShadow: 'var(--shadow-float)', border: '1px solid #BBF7D0' }}>
                     <div style={{
-                        width: '80px', height: '80px', backgroundColor: '#F0FDF4', borderRadius: '50%',
+                        width: '80px', height: '80px', backgroundColor: '#DCFCE7', borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px'
                     }}>
-                        <CheckCircle size={40} color="#22C55E" />
+                        <CheckCircle size={40} color="#16A34A" />
                     </div>
 
-                    <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '12px', color: '#0F172A' }}>Mission Accomplished</h1>
-                    <p style={{ color: '#64748B', marginBottom: '32px', fontSize: '16px' }}>
+                    <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '12px', color: '#14532D' }}>Mission Accomplished</h1>
+                    <p style={{ color: '#15803D', marginBottom: '32px', fontSize: '16px' }}>
                         You stayed true to your word. Your stake is safe.
                     </p>
 
-                    <div style={{ backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '16px', marginBottom: '32px' }}>
-                        <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reward Unlocked</p>
+                    <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', marginBottom: '32px', border: '1px solid #BBF7D0' }}>
+                        <p style={{ fontSize: '14px', color: '#15803D', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reward Unlocked</p>
                         <div style={{ fontSize: '32px', fontWeight: 800, color: '#FBBF24', margin: '8px 0' }}>+{Math.floor(task.stake * 0.05)} Coins</div>
-                        <p style={{ fontSize: '14px', color: '#94A3B8' }}>+50 XP • Streak: 5 Days</p>
+                        <p style={{ fontSize: '14px', color: '#86EFAC', color: '#4ADE80' }}><span style={{ color: '#16A34A' }}>+50 XP</span> • Streak: 5 Days</p>
                     </div>
 
-                    <button className="btn" onClick={onHome} style={{ width: '100%', backgroundColor: '#0F172A', color: 'white', padding: '16px' }}>
+                    <button className="btn" onClick={onHome} style={{ width: '100%', backgroundColor: '#16A34A', color: 'white', padding: '16px', boxShadow: '0 4px 6px -1px rgba(22, 163, 74, 0.4)' }}>
                         Back to Dashboard
                     </button>
                 </div>

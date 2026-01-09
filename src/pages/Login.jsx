@@ -72,6 +72,7 @@ const Login = ({ onNavigate }) => {
                                 type="email" required
                                 value={email} onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@example.com"
+                                autoComplete="email"
                             />
                         </div>
                     </div>
@@ -84,6 +85,7 @@ const Login = ({ onNavigate }) => {
                                 type="password" required
                                 value={password} onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
+                                autoComplete="current-password"
                             />
                         </div>
                     </div>
@@ -113,14 +115,15 @@ const Login = ({ onNavigate }) => {
                             background: 'none',
                             border: 'none',
                             color: 'hsl(var(--color-text-secondary))',
-                            fontSize: '11px',
-                            fontWeight: 500,
+                            fontSize: '12px',
+                            fontWeight: 600,
                             cursor: 'pointer',
-                            opacity: 0.6,
-                            transition: 'opacity 0.2s'
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            textDecoration: 'underline'
                         }}
                         onMouseEnter={e => e.target.style.opacity = 1}
-                        onMouseLeave={e => e.target.style.opacity = 0.6}
+                        onMouseLeave={e => e.target.style.opacity = 0.8}
                     >
                         Admin Portal
                     </button>

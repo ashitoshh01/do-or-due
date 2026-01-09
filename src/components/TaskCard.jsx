@@ -19,17 +19,17 @@ const TaskCard = ({ task, onUploadProof, onDelete, onChat, onExpire, onDonate })
     let StatusIcon = Clock;
 
     if (isSuccess) {
-        statusColor = '#22C55E';
-        statusBg = '#F0FDF4';
+        statusColor = 'hsl(var(--color-accent-green))';
+        statusBg = 'rgba(34, 197, 94, 0.1)'; // Soft green background
         statusLabel = 'COMPLETED';
         StatusIcon = Check;
     } else if (isFailed) {
-        statusColor = '#EF4444';
+        statusColor = 'hsl(var(--color-accent-red))';
         statusBg = '#FEF2F2';
         statusLabel = 'FAILED';
         StatusIcon = AlertCircle;
     } else if (isUnderReview) {
-        statusColor = '#3B82F6';
+        statusColor = 'hsl(var(--color-accent-blue))';
         statusBg = '#EFF6FF';
         statusLabel = 'IN REVIEW';
         StatusIcon = Clock;
