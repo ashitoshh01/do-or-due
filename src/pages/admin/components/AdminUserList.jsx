@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { subscribeToAllUsers } from '../../../services/adminService';
+import { subscribeToAllUsers, deleteUserProfile } from '../../../services/adminService';
 import { addFunds, updateUserProfile } from '../../../services/dbService';
 import { useTheme } from '../../../context/ThemeContext';
-import { Search, Plus, Coins, User, ArrowLeft, X, Check, Calendar, ChevronDown, Award } from 'lucide-react';
+import { Search, Plus, Coins, User, ArrowLeft, X, Check, Calendar, ChevronDown, Award, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Popup from '../../../components/Popup';
 
@@ -15,6 +15,7 @@ const AdminUserList = ({ onBack }) => {
     // States for Modals
     const [selectedUserForCoins, setSelectedUserForCoins] = useState(null);
     const [selectedUserForPlan, setSelectedUserForPlan] = useState(null);
+    const [selectedUserForDelete, setSelectedUserForDelete] = useState(null);
 
     // Form States
     const [coinAmount, setCoinAmount] = useState('');
@@ -113,6 +114,20 @@ const AdminUserList = ({ onBack }) => {
             console.error(error);
             setProcessing(false);
             setPopup({ isOpen: true, type: 'error', title: 'Update Failed', message: 'Failed to update user plan.' });
+        }
+    };
+
+    const handleDeleteUser = async () => {
+        setProcessing(true);
+        try {
+            await deleteUserProfile(selectedUserForDelete.userId);
+            setProcessing(false);
+            setPopup({ isOpen: true, type: 'success', title: 'User Deleted', message: 'User has been permanently removed.' });
+            setSelectedUserForDelete(null);
+        } catch (error) {
+            console.error(error);
+            setProcessing(false);
+            setPopup({ isOpen: true, type: 'error', title: 'Delete Failed', message: 'Failed to delete user.' });
         }
     };
 
@@ -222,6 +237,17 @@ const AdminUserList = ({ onBack }) => {
                                                 }}
                                             >
                                                 <Plus size={14} /> Add Coins
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedUserForDelete(user)}
+                                                style={{
+                                                    background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none',
+                                                    padding: '8px', borderRadius: '8px', cursor: 'pointer',
+                                                    marginLeft: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+                                                }}
+                                                title="Delete User"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </td>
                                     </tr>
@@ -353,6 +379,40 @@ const AdminUserList = ({ onBack }) => {
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <button onClick={() => setSelectedUserForPlan(null)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: `1px solid ${borderColor}`, background: 'transparent', color: subTextColor, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                                 <button onClick={handleUpdatePlan} disabled={processing} style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: processing ? '#94A3B8' : '#3B82F6', color: 'white', fontWeight: 700, cursor: processing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>{processing ? 'Saving...' : 'Save Plan'}</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL: DELETE USER */}
+            <AnimatePresence>
+                {selectedUserForDelete && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+                        onClick={() => setSelectedUserForDelete(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            style={{ background: cardBg, padding: '32px', borderRadius: '24px', width: '400px', maxWidth: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '24px' }}>
+                                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                                    <AlertTriangle size={32} color="#EF4444" />
+                                </div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 800, color: textColor, marginBottom: '8px' }}>Delete User?</h2>
+                                <p style={{ fontSize: '14px', color: subTextColor, lineHeight: '1.5' }}>
+                                    Are you sure you want to delete <b>{selectedUserForDelete.name}</b>? This action cannot be undone and will remove them from the leaderboard.
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button onClick={() => setSelectedUserForDelete(null)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: `1px solid ${borderColor}`, background: 'transparent', color: subTextColor, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                                <button onClick={handleDeleteUser} disabled={processing} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: 'none', background: '#EF4444', color: 'white', fontWeight: 700, cursor: processing ? 'not-allowed' : 'pointer' }}>
+                                    {processing ? 'Deleting...' : 'Delete'}
+                                </button>
                             </div>
                         </motion.div>
                     </motion.div>

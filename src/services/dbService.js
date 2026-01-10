@@ -85,10 +85,12 @@ export const subscribeToLeaderboard = (callback) => {
         orderBy("xp", "desc"),
     );
     return onSnapshot(q, (snapshot) => {
-        const users = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const users = snapshot.docs
+            .map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }))
+            .filter(user => user.email); // Only show users with valid email
         callback(users);
     }, (error) => {
         console.error("Error subscribing to leaderboard:", error);

@@ -14,7 +14,8 @@ import {
     getDoc,
     increment,
     setDoc,
-    onSnapshot
+    onSnapshot,
+    deleteDoc
 } from "firebase/firestore";
 import { checkPlanExpiration } from "./dbService";
 
@@ -282,7 +283,7 @@ export const subscribeToAllUsers = (callback) => {
             checkPlanExpiration(userData, doc.id);
 
             return userData;
-        });
+        }).filter(user => user.email); // Only show users with an email
 
         // Client-side sort to avoid index issues during dev
         users.sort((a, b) => b.joinedAt - a.joinedAt);
@@ -292,6 +293,16 @@ export const subscribeToAllUsers = (callback) => {
         console.error("Error subscribing to users:", error);
         callback([]);
     });
+};
+
+export const deleteUserProfile = async (userId) => {
+    try {
+        await deleteDoc(doc(db, "users", userId));
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        throw error;
+    }
 };
 
 
