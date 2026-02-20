@@ -13,6 +13,7 @@ import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
 import Plans from './pages/Plans';
 import AddFundsModal from './components/AddFundsModal';
+import WithdrawModal from './components/WithdrawModal';
 import Popup from './components/Popup';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -44,6 +45,7 @@ function MainApp() {
   const [verificationTask, setVerificationTask] = useState(null);
   const [currentTask, setCurrentTask] = useState(null);
   const [showFundsModal, setShowFundsModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag to prevent double credit
@@ -352,7 +354,7 @@ function MainApp() {
 
   return (
     <>
-      <Layout onNavigate={setAppView} balance={userProfile.balance} onAddFunds={handleAddFunds} userProfile={userProfile}>
+      <Layout onNavigate={setAppView} balance={userProfile.balance} onAddFunds={() => setShowFundsModal(true)} onWithdrawFunds={() => setShowWithdrawModal(true)} userProfile={userProfile}>
         {renderContent()}
       </Layout>
 
@@ -362,6 +364,15 @@ function MainApp() {
           userEmail={currentUser?.email}
           userName={userProfile?.name || currentUser?.displayName}
           amount={0}
+        />
+      )}
+
+      {showWithdrawModal && (
+        <WithdrawModal
+          onClose={() => setShowWithdrawModal(false)}
+          userEmail={currentUser?.email}
+          userName={userProfile?.name || currentUser?.displayName}
+          currentBalance={userProfile?.balance || 0}
         />
       )}
 

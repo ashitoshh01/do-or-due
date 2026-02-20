@@ -3,12 +3,13 @@ import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogO
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { defaultAvatars } from '../data/defaultAvatars';
+import { requestNotificationPermission } from '../services/dbService';
 
-const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} }) => {
+const Layout = ({ children, onNavigate, balance, onAddFunds, onWithdrawFunds, userProfile = {} }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showMobileMore, setShowMobileMore] = useState(false);
     const [iconRotating, setIconRotating] = useState(false);
-    const { logout } = useAuth();
+    const { logout, currentUser } = useAuth();
     const { theme, toggleTheme, isDark } = useTheme();
     const dropdownRef = useRef(null);
     const mobileMoreRef = useRef(null);
@@ -41,6 +42,20 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             document.removeEventListener('keydown', handleEscKey);
         };
     }, [showUserMenu, showMobileMore]);
+
+    // Request permissions for Zomato-style behavioral nudges
+    useEffect(() => {
+        if (userProfile && userProfile.email && !userProfile.fcmToken) {
+            // Wait 2 seconds so it isn't an immediate jump-scare on load
+            const timer = setTimeout(() => {
+                if ('Notification' in window && Notification.permission !== 'denied') {
+                    // This asks the browser silently, only opens popup if they haven't explicitly blocked it
+                    requestNotificationPermission(userProfile.id || userProfile.uid || currentUser?.uid);
+                }
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [userProfile]);
 
     const handleLogout = async () => {
         try {
@@ -78,7 +93,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     padding: '0 24px',
                     zIndex: 50,
                     position: 'relative',
-                    border: `1px solid hsl(var(--color-border))`
+                    border: `1px solid hsl(var(--color - border))`
                 }}>
                     {/* Logo Area */}
                     <button onClick={() => onNavigate('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -103,7 +118,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <div className={`theme-toggle-icon ${iconRotating ? 'rotating' : ''}`}>
+                            <div className={`theme - toggle - icon ${iconRotating ? 'rotating' : ''} `}>
                                 {isDark ? <Sun size={18} color="hsl(var(--color-text-main))" /> : <Moon size={18} color="hsl(var(--color-text-main))" />}
                             </div>
                         </button>
@@ -138,25 +153,48 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                         }}>
                             <Coins size={14} color="hsl(var(--color-accent-gold))" fill="hsl(var(--color-accent-gold))" />
                             {balance}
-                            <button
-                                onClick={onAddFunds}
-                                style={{
-                                    background: isDark ? 'hsl(var(--color-border))' : '#E2E8F0',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    width: '16px',
-                                    height: '16px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    marginLeft: '4px',
-                                    cursor: 'pointer',
-                                    color: 'hsl(var(--color-text-main))'
-                                }}
-                            >
-                                +
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+                                <button
+                                    onClick={onWithdrawFunds}
+                                    style={{
+                                        background: isDark ? 'hsl(var(--color-border))' : '#FEE2E2',
+                                        border: '1px solid #FECACA',
+                                        borderRadius: '50%',
+                                        width: '18px',
+                                        height: '18px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        color: '#EF4444',
+                                        padding: 0
+                                    }}
+                                    title="Withdraw Funds"
+                                >
+                                    -
+                                </button>
+                                <button
+                                    onClick={onAddFunds}
+                                    style={{
+                                        background: isDark ? 'hsl(var(--color-border))' : '#DCFCE7',
+                                        border: '1px solid #BBF7D0',
+                                        borderRadius: '50%',
+                                        width: '18px',
+                                        height: '18px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        color: '#16A34A',
+                                        padding: 0
+                                    }}
+                                    title="Add Funds"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
 
                         {/* Avatar & Dropdown */}
@@ -174,7 +212,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     justifyContent: 'center', fontWeight: 600, fontSize: '13px',
                                     color: 'hsl(var(--color-text-main))',
                                     overflow: 'hidden',
-                                    border: `1px solid hsl(var(--color-border))`
+                                    border: `1px solid hsl(var(--color - border))`
                                 }}>
                                     {userProfile.avatar?.value ? (
                                         <img src={userProfile.avatar.value} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -195,11 +233,11 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     backgroundColor: 'hsl(var(--color-bg-card))',
                                     borderRadius: '16px',
                                     boxShadow: 'var(--shadow-lg)',
-                                    border: `1px solid hsl(var(--color-border-light))`,
+                                    border: `1px solid hsl(var(--color - border - light))`,
                                     padding: '8px',
                                     zIndex: 100
                                 }}>
-                                    <div style={{ padding: '8px 12px', borderBottom: `1px solid hsl(var(--color-border-light))`, marginBottom: '4px' }}>
+                                    <div style={{ padding: '8px 12px', borderBottom: `1px solid hsl(var(--color - border - light))`, marginBottom: '4px' }}>
                                         <p style={{ fontWeight: 600, fontSize: '14px', color: 'hsl(var(--color-text-main))' }}>
                                             {userProfile.name || userProfile.email?.split('@')[0] || 'User'}
                                         </p>
@@ -214,7 +252,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     <DropdownItem onClick={() => { onNavigate('plans'); setShowUserMenu(false); }} icon={<Zap size={16} />} label="Plans" />
                                     <DropdownItem onClick={() => { onNavigate('settings'); setShowUserMenu(false); }} icon={<Settings size={16} />} label="Settings" />
 
-                                    <div style={{ borderTop: `1px solid hsl(var(--color-border-light))`, margin: '4px 0' }} />
+                                    <div style={{ borderTop: `1px solid hsl(var(--color - border - light))`, margin: '4px 0' }} />
 
                                     <button onClick={handleLogout} style={{
                                         display: 'flex', alignItems: 'center', gap: '10px',
@@ -232,7 +270,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             </div>
 
             {/* --- MOBILE HEADER --- */}
-            <div className="visible-mobile" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'hsl(var(--color-bg-card))', position: 'sticky', top: 0, zIndex: 40, borderBottom: `1px solid hsl(var(--color-border-light))` }}>
+            <div className="visible-mobile" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'hsl(var(--color-bg-card))', position: 'sticky', top: 0, zIndex: 40, borderBottom: `1px solid hsl(var(--color - border - light))` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {/* Hamburger Button Removed */}
                     <button onClick={() => onNavigate('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none' }}>
@@ -310,7 +348,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             <div className="visible-mobile" style={{
                 position: 'fixed', bottom: 0, left: 0, width: '100%', height: '64px',
                 backgroundColor: 'hsl(var(--color-bg-card))',
-                borderTop: `1px solid hsl(var(--color-border-light))`,
+                borderTop: `1px solid hsl(var(--color - border - light))`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-around', zIndex: 1000
             }}>
                 <button onClick={() => onNavigate('dashboard')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
@@ -348,7 +386,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                 bottom: '70px',
                                 right: 0,
                                 background: 'hsl(var(--color-bg-card))',
-                                border: `1px solid hsl(var(--color-border-light))`,
+                                border: `1px solid hsl(var(--color - border - light))`,
                                 borderRadius: '12px',
                                 boxShadow: 'var(--shadow-xl)',
                                 minWidth: '180px',

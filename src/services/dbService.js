@@ -1,4 +1,4 @@
-import { db } from "../firebase";
+import { db, messaging } from "../firebase";
 import {
     collection,
     query,
@@ -15,6 +15,7 @@ import {
     serverTimestamp,
     getDocs
 } from "firebase/firestore";
+import { getToken } from "firebase/messaging";
 
 // --- User Operations ---
 
@@ -122,6 +123,33 @@ export const addFunds = async (userId, amount) => {
 export const updateUserProfile = async (userId, updates) => {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, updates);
+};
+
+export const requestNotificationPermission = async (userId) => {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            const currentToken = await getToken(messaging, {
+                // VAPID key usually required if standard push, but optional if fully configured in console
+                // vapidKey: "YOUR_VAPID_KEY_HERE" 
+            });
+            if (currentToken) {
+                const userRef = doc(db, "users", userId);
+                await updateDoc(userRef, {
+                    fcmToken: currentToken
+                });
+                console.log("FCM Token saved successfully.");
+                return true;
+            } else {
+                console.log("No registration token available.");
+            }
+        } else {
+            console.log("Notification permission not granted.");
+        }
+    } catch (err) {
+        console.error("An error occurred while retrieving token.", err);
+    }
+    return false;
 };
 
 // --- Task Operations ---
