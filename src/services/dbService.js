@@ -146,7 +146,7 @@ export const requestNotificationPermission = async (userId) => {
                 await updateDoc(userRef, {
                     fcmToken: currentToken
                 });
-                console.log("FCM Token saved successfully.");
+                // console.log("FCM Token saved successfully.");
                 return true;
             } else {
                 console.log("No registration token available.");

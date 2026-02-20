@@ -241,7 +241,7 @@ export const requestNotificationPermission = async () => {
                 // I'll try calling getToken without vapidKey first (it might warn but work if service worker is set up correctly?)
                 // Actually, let's just leave it empty for now, it often fails without it.
             });
-            console.log("FCM Token:", token);
+            // console.log("FCM Token:", token);
             return token;
         } else {
             console.log("Notification permission denied");

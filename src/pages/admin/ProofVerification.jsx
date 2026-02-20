@@ -41,7 +41,7 @@ const ProofVerification = ({ onLogout }) => {
             const token = await requestNotificationPermission();
             if (token) {
                 await saveAdminToken(token);
-                console.log("Admin Notification Token Saved");
+                // console.log("Admin Notification Token Saved");
             }
         };
         initNotifications();
