@@ -373,6 +373,7 @@ function MainApp() {
           userEmail={currentUser?.email}
           userName={userProfile?.name || currentUser?.displayName}
           currentBalance={userProfile?.balance || 0}
+          userStats={userProfile?.stats || {}}
         />
       )}
 
