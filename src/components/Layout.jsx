@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Home } from 'lucide-react';
+import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Home, Flame } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { defaultAvatars } from '../data/defaultAvatars';
@@ -107,6 +107,22 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                 {isDark ? <Sun size={18} color="hsl(var(--color-text-main))" /> : <Moon size={18} color="hsl(var(--color-text-main))" />}
                             </div>
                         </button>
+
+                        {/* Streak Pill */}
+                        <div style={{
+                            backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#FFF7ED',
+                            padding: '6px 12px',
+                            borderRadius: 'var(--radius-pill)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: 'hsl(var(--color-text-main))'
+                        }}>
+                            <Flame size={14} color="#F97316" fill="#F97316" />
+                            {userProfile.streak || 0}
+                        </div>
 
                         {/* Coins Pill */}
                         <div style={{
@@ -248,6 +264,21 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     >
                         {isDark ? <Sun size={16} color="hsl(var(--color-text-main))" /> : <Moon size={16} color="hsl(var(--color-text-main))" />}
                     </button>
+
+                    <div style={{
+                        backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#FFF7ED',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'hsl(var(--color-text-main))'
+                    }}>
+                        <Flame size={12} color="#F97316" fill="#F97316" />
+                        {userProfile.streak || 0}
+                    </div>
 
                     <div style={{
                         backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#F1F5F9',

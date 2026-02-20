@@ -12,7 +12,8 @@ import {
     getDoc,
     orderBy,
     increment,
-    serverTimestamp
+    serverTimestamp,
+    getDocs
 } from "firebase/firestore";
 
 // --- User Operations ---
@@ -28,6 +29,9 @@ export const createUserProfile = async (userId, email, name = null) => {
             balance: 100,
             xp: 0,
             streak: 0,
+            longestStreak: 0,
+            lastTaskCompleted: null,
+            groups: [], // Array of group IDs the user belongs to
             createdAt: new Date(),
             plan: 'base', // Explicitly set to base plan
             defaultCharity: 1, // Defaulting to St. Jude (ID: 1) as "from our side"
@@ -151,7 +155,7 @@ export const addTask = async (userId, taskData) => {
     }
 
     // 1. Create Task in Subcollection
-    const taskRef = await addDoc(collection(db, "users", userId, "tasks"), {
+    await addDoc(collection(db, "users", userId, "tasks"), {
         userId, // Keep userId for reference if needed, though implicit in path
         objective: taskData.objective,
         stake: parseInt(taskData.stake),
@@ -188,10 +192,32 @@ export const completeTask = async (userId, taskId, stakeAmount) => {
         const data = userSnap.data();
         const reward = Math.floor(stakeAmount * 0.05); // 5% reward
 
+        let newStreak = (data.streak || 0);
+        let now = new Date();
+        const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (data.lastTaskCompleted) {
+            let lastCompleted = data.lastTaskCompleted.toDate ? data.lastTaskCompleted.toDate() : new Date(data.lastTaskCompleted);
+            const lastMidnight = new Date(lastCompleted.getFullYear(), lastCompleted.getMonth(), lastCompleted.getDate());
+            const diffDays = Math.floor((nowMidnight - lastMidnight) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                newStreak += 1;
+            } else if (diffDays > 1) {
+                newStreak = 1;
+            }
+        } else {
+            newStreak = Math.max(1, newStreak);
+        }
+
+        let newLongestStreak = Math.max((data.longestStreak || 0), newStreak);
+
         await updateDoc(userRef, {
             balance: data.balance + stakeAmount + reward, // Return stake + 5% reward
             xp: (data.xp || 0) + 50,
-            streak: (data.streak || 0) + 1,
+            streak: newStreak,
+            longestStreak: newLongestStreak,
+            lastTaskCompleted: now,
             "stats.success": increment(1),
             "stats.earned": increment(reward)
         });
@@ -307,5 +333,188 @@ export const subscribeToFeedbacks = (callback) => {
             ...doc.data()
         }));
         callback(feedbacks);
+    });
+};
+
+// --- Group / Squad Operations ---
+
+export const createGroup = async (userId, groupName) => {
+    try {
+        // 1. Generate a random invite code (e.g., 6 uppercase letters/numbers)
+        const generateCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+        let inviteCode = generateCode();
+
+        // Ensure uniqueness (simple retry mechanism)
+        let codeExists = true;
+        while (codeExists) {
+            const codeQuery = query(collection(db, "groups"), where("inviteCode", "==", inviteCode));
+            const codeSnapshot = await getDocs(codeQuery);
+            if (codeSnapshot.empty) {
+                codeExists = false;
+            } else {
+                inviteCode = generateCode();
+            }
+        }
+
+        // 2. Create the group document
+        const groupRef = await addDoc(collection(db, "groups"), {
+            name: groupName,
+            inviteCode: inviteCode,
+            createdBy: userId,
+            createdAt: serverTimestamp(),
+            members: [userId] // The creator is the first member
+        });
+
+        // 3. Update the user's profile to include this group ID
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const currentGroups = userData.groups || [];
+            if (!currentGroups.includes(groupRef.id)) {
+                await updateDoc(userRef, {
+                    groups: [...currentGroups, groupRef.id]
+                });
+            }
+        }
+
+        return { id: groupRef.id, inviteCode, name: groupName, members: [userId] };
+    } catch (error) {
+        console.error("Error creating group:", error);
+        throw error;
+    }
+};
+
+export const joinGroup = async (userId, inviteCode) => {
+    try {
+        const upperCode = inviteCode.toUpperCase().trim();
+
+        // 1. Find the group by invite code
+        const q = query(collection(db, "groups"), where("inviteCode", "==", upperCode));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            throw new Error("Invalid invite code. Group not found.");
+        }
+
+        const groupDoc = querySnapshot.docs[0];
+        const groupData = groupDoc.data();
+        const groupId = groupDoc.id;
+
+        // 2. Add user to group's members array if not already there
+        const currentMembers = groupData.members || [];
+        if (!currentMembers.includes(userId)) {
+            await updateDoc(doc(db, "groups", groupId), {
+                members: [...currentMembers, userId]
+            });
+        }
+
+        // 3. Add group to user's groups array if not already there
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const currentUserGroups = userData.groups || [];
+            if (!currentUserGroups.includes(groupId)) {
+                await updateDoc(userRef, {
+                    groups: [...currentUserGroups, groupId]
+                });
+            } else {
+                throw new Error("You are already in this squad!");
+            }
+        }
+
+        return { id: groupId, ...groupData };
+    } catch (error) {
+        console.error("Error joining group:", error);
+        throw error;
+    }
+};
+
+export const subscribeToUserGroups = (userId, callback) => {
+    // 1. Subscribe to the user profile to get their list of group IDs
+    const userRef = doc(db, "users", userId);
+
+    return onSnapshot(userRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            const groupIds = userData.groups || [];
+
+            if (groupIds.length === 0) {
+                callback([]);
+                return;
+            }
+
+            // 2. Fetch the corresponding group documents
+            try {
+                // Since 'in' queries are limited to 10 items, we batch them if necessary
+                const groups = [];
+                // Chunk array into size of 10
+                const chunks = [];
+                for (let i = 0; i < groupIds.length; i += 10) {
+                    chunks.push(groupIds.slice(i, i + 10));
+                }
+
+                for (const chunk of chunks) {
+                    const qGroups = query(collection(db, "groups"), where("__name__", "in", chunk));
+                    const snap = await getDocs(qGroups);
+                    snap.docs.forEach(d => {
+                        groups.push({ id: d.id, ...d.data() });
+                    });
+                }
+
+                callback(groups);
+
+            } catch (err) {
+                console.error("Error fetching user's groups:", err);
+                callback([]);
+            }
+        }
+    });
+};
+
+export const subscribeToGroupMembers = (groupId, callback) => {
+    // We first read the group to get members, then subscribe to those users.
+    // However, for pure real-time, we can subscribe to the group doc itself,
+    // and whenever members change, fetch the users.
+    const groupRef = doc(db, "groups", groupId);
+
+    return onSnapshot(groupRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            const groupData = docSnap.data();
+            const memberIds = groupData.members || [];
+
+            if (memberIds.length === 0) {
+                callback({ groupName: groupData.name, users: [] });
+                return;
+            }
+
+            try {
+                // Fetch the users
+                const users = [];
+                const chunks = [];
+                for (let i = 0; i < memberIds.length; i += 10) {
+                    chunks.push(memberIds.slice(i, i + 10));
+                }
+
+                for (const chunk of chunks) {
+                    const qUsers = query(collection(db, "users"), where("__name__", "in", chunk));
+                    const snap = await getDocs(qUsers);
+                    snap.docs.forEach(d => {
+                        users.push({ id: d.id, ...d.data() });
+                    });
+                }
+
+                // Sort by XP descending locally since we fetched by 'in' __name__
+                users.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+
+                callback({ groupName: groupData.name, users });
+
+            } catch (err) {
+                console.error("Error fetching group members:", err);
+                callback({ groupName: groupData.name, users: [] });
+            }
+        }
     });
 };
