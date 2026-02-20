@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeToAllUsers, deleteUserProfile } from '../../../services/adminService';
-import { addFunds, updateUserProfile } from '../../../services/dbService';
+import { addFunds, removeFunds, updateUserProfile } from '../../../services/dbService';
 import { useTheme } from '../../../context/ThemeContext';
-import { Search, Plus, Coins, User, ArrowLeft, X, Check, Calendar, ChevronDown, Award, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Coins, User, ArrowLeft, X, Check, Calendar, ChevronDown, Award, Trash2, AlertTriangle, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Popup from '../../../components/Popup';
 
@@ -14,11 +14,13 @@ const AdminUserList = ({ onBack }) => {
 
     // States for Modals
     const [selectedUserForCoins, setSelectedUserForCoins] = useState(null);
+    const [selectedUserForSubtract, setSelectedUserForSubtract] = useState(null);
     const [selectedUserForPlan, setSelectedUserForPlan] = useState(null);
     const [selectedUserForDelete, setSelectedUserForDelete] = useState(null);
 
     // Form States
     const [coinAmount, setCoinAmount] = useState('');
+    const [subtractAmount, setSubtractAmount] = useState('');
     const [newPlan, setNewPlan] = useState('base');
     const [planExpiry, setPlanExpiry] = useState('');
     const [processing, setProcessing] = useState(false);
@@ -76,6 +78,26 @@ const AdminUserList = ({ onBack }) => {
             console.error(error);
             setProcessing(false);
             setPopup({ isOpen: true, type: 'error', title: 'Transfer Failed', message: 'Failed to add funds.' });
+        }
+    };
+
+    const handleSubtractCoins = async () => {
+        if (!subtractAmount || isNaN(subtractAmount) || parseInt(subtractAmount) <= 0) {
+            setPopup({ isOpen: true, type: 'warning', title: 'Invalid Amount', message: 'Please enter a valid positive number.' });
+            return;
+        }
+
+        setProcessing(true);
+        try {
+            await removeFunds(selectedUserForSubtract.userId, parseInt(subtractAmount));
+            setProcessing(false);
+            setPopup({ isOpen: true, type: 'success', title: 'Coins Removed!', message: `Successfully deducted ${subtractAmount} coins from ${selectedUserForSubtract.name}.` });
+            setSelectedUserForSubtract(null);
+            setSubtractAmount('');
+        } catch (error) {
+            console.error(error);
+            setProcessing(false);
+            setPopup({ isOpen: true, type: 'error', title: 'Deduction Failed', message: 'Failed to remove funds.' });
         }
     };
 
@@ -236,7 +258,18 @@ const AdminUserList = ({ onBack }) => {
                                                     fontWeight: 600, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px'
                                                 }}
                                             >
-                                                <Plus size={14} /> Add Coins
+                                                <Plus size={14} /> Add
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedUserForSubtract(user)}
+                                                style={{
+                                                    background: '#EF4444', color: 'white', border: 'none',
+                                                    padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                                                    fontWeight: 600, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                                    marginLeft: '8px'
+                                                }}
+                                            >
+                                                <Minus size={14} /> Remove
                                             </button>
                                             <button
                                                 onClick={() => setSelectedUserForDelete(user)}
@@ -297,6 +330,46 @@ const AdminUserList = ({ onBack }) => {
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <button onClick={() => setSelectedUserForCoins(null)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: `1px solid ${borderColor}`, background: 'transparent', color: subTextColor, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                                 <button onClick={handleAddCoins} disabled={processing} style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: processing ? '#94A3B8' : '#F59E0B', color: 'white', fontWeight: 700, cursor: processing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>{processing ? 'Processing...' : <><Check size={18} /> Confirm</>}</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL: REMOVE COINS */}
+            <AnimatePresence>
+                {selectedUserForSubtract && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+                        onClick={() => setSelectedUserForSubtract(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            style={{ background: cardBg, padding: '32px', borderRadius: '24px', width: '400px', maxWidth: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h2 style={{ fontSize: '20px', fontWeight: 800, color: textColor }}>Remove Coins</h2>
+                                <button onClick={() => setSelectedUserForSubtract(null)} style={{ background: 'none', border: 'none', color: subTextColor, cursor: 'pointer' }}><X size={20} /></button>
+                            </div>
+                            <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '18px', fontWeight: 700, color: textColor }}>{selectedUserForSubtract.name}</div>
+                                <div style={{ fontSize: '13px', color: subTextColor }}>Current Balance: {selectedUserForSubtract.balance || 0}</div>
+                            </div>
+                            <div style={{ marginBottom: '32px' }}>
+                                <label style={{ display: 'block', color: subTextColor, fontSize: '14px', marginBottom: '8px', fontWeight: 600 }}>Amount to Deduct</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Minus size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#EF4444' }} />
+                                    <input
+                                        type="number" placeholder="Enter amount..." value={subtractAmount} onChange={(e) => setSubtractAmount(e.target.value)} autoFocus
+                                        style={{ width: '100%', padding: '16px 16px 16px 48px', background: inputBg, border: `1px solid ${borderColor}`, borderRadius: '12px', color: textColor, fontSize: '16px', fontWeight: 600, outline: 'none' }}
+                                    />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button onClick={() => setSelectedUserForSubtract(null)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: `1px solid ${borderColor}`, background: 'transparent', color: subTextColor, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                                <button onClick={handleSubtractCoins} disabled={processing} style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: processing ? '#94A3B8' : '#EF4444', color: 'white', fontWeight: 700, cursor: processing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>{processing ? 'Processing...' : <><Check size={18} /> Deduct</>}</button>
                             </div>
                         </motion.div>
                     </motion.div>

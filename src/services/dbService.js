@@ -120,6 +120,14 @@ export const addFunds = async (userId, amount) => {
     }, { merge: true });
 };
 
+export const removeFunds = async (userId, amount) => {
+    console.log(`Removing funds from ${userId}: ${amount}`);
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, {
+        balance: increment(-amount)
+    }, { merge: true });
+};
+
 export const updateUserProfile = async (userId, updates) => {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, updates);
