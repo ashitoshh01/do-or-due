@@ -331,7 +331,48 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, onWithdrawFunds, us
                     }}>
                         <Coins size={12} fill="hsl(var(--color-accent-gold))" color="hsl(var(--color-accent-gold))" />
                         {balance}
-                        <button onClick={onAddFunds} style={{ border: 'none', background: 'transparent', fontWeight: 'bold', cursor: 'pointer', color: 'hsl(var(--color-text-main))' }}>+</button>
+                        <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+                            <button
+                                onClick={onWithdrawFunds}
+                                style={{
+                                    background: isDark ? 'hsl(var(--color-border))' : '#FEE2E2',
+                                    border: '1px solid #FECACA',
+                                    borderRadius: '50%',
+                                    width: '16px',
+                                    height: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    color: '#EF4444',
+                                    padding: 0
+                                }}
+                                title="Withdraw Funds"
+                            >
+                                -
+                            </button>
+                            <button
+                                onClick={onAddFunds}
+                                style={{
+                                    background: isDark ? 'hsl(var(--color-border))' : '#DCFCE7',
+                                    border: '1px solid #BBF7D0',
+                                    borderRadius: '50%',
+                                    width: '16px',
+                                    height: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    color: '#16A34A',
+                                    padding: 0
+                                }}
+                                title="Add Funds"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
