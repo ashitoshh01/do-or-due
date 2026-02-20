@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { X, Landmark, Lock, CheckCircle2 } from 'lucide-react';
 
 const WithdrawModal = ({ onClose, userEmail, userName, currentBalance, userStats = {} }) => {
