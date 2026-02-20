@@ -110,6 +110,11 @@ body {
   overflow-x: hidden;
   width: 100%;
   transition: background-color var(--transition-theme), color var(--transition-theme);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #root {
